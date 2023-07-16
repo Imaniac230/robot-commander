@@ -15,10 +15,10 @@ def record_audio(seconds: int, filename: str = "output.wav"):
     fs = 44100  # Record at 44100 samples per second
 
     p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16,
-                    channels=2,
-                    rate=44100,
-                    frames_per_buffer=1024,
+    stream = p.open(format=sample_format,
+                    channels=channels,
+                    rate=fs,
+                    frames_per_buffer=chunk,
                     input=True)
     frames = [stream.read(chunk) for _ in range(0, int(fs / chunk * seconds))]
     stream.stop_stream()
