@@ -53,7 +53,7 @@ def generate_image(prompt: str, filename: str = "image.png"):
 
 
 class OpenAIInterface:
-    def __init__(self, key: str = None) -> None:
+    def __init__(self, key: str = None, context: list = None) -> None:
         if key is not None:
             openai.api_key = key
         self.chat_model = "gpt-3.5-turbo"
@@ -64,13 +64,24 @@ class OpenAIInterface:
             self.messages += "<" + os.path.basename(file).split('.')[0] + ">"
             with open(file, 'r') as rd:
                 self.messages += rd.read()
-            self.messages += "<" + os.path.basename(file).split('.')[0] + ">" + "\n"
+            self.messages += "</" + os.path.basename(file).split('.')[0] + ">" + "\n"
+
+        self.context = ""
+        for item in context:
+            self.context += item + "\n"
 
         if os.getenv("DEBUG") is not None:
+            if context is not None:
+                print(f'context:\n{self.context}')
             print(f'messages:\n{self.messages}')
 
-        self.init_prompt = f'''
-            Following are the format of the messages with their name as the tags.
+        self.init_prompt = ""
+        if context is not None:
+            self.init_prompt += f'''
+                The following lines provide context for mapping any positions and orientations to keywords:
+                {self.context}'''
+        self.init_prompt += f'''
+            Now, following are the actual format of the messages with their name as the tags <name></name>:
             {self.messages}
 
             Return a python list of these messages required in order to achieve the user's goals in ROS2 without any 

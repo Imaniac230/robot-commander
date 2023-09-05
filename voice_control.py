@@ -25,7 +25,12 @@ def main() -> None:
     ros_client = roslibpy.Ros(host=args.host, port=args.port)
     ros_client.run()
 
-    openai_interface = OpenAIInterface(key=args.key)
+    context = ['Peter: ["x": 1.0 "y": 1.0 "w": 1.0]']
+    context += ['Milos: ["x": 10.0 "y": -5.0 "w": 0.5]']
+    context += ['Tomas: ["x": -12.0 "y": 10.0 "w": 1.0]']
+    context += ['Milos window: ["x": 11.5 "y": -4.2 "w": 0.5]']
+    openai_interface = OpenAIInterface(key=args.key, context=context)
+
     while True:
         try:
             input("Press enter to record the next command")
