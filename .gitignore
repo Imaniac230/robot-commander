@@ -2,4 +2,5 @@
 **.vscode**
 **.idea**
 
-prompt.wav
+*.wav
+*.log
