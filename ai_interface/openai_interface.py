@@ -4,8 +4,6 @@ import openai
 import json
 import glob
 
-import utils
-
 
 def generate_image(prompt: str, filename: str = "image.png"):
     import requests
@@ -26,7 +24,7 @@ def generate_image(prompt: str, filename: str = "image.png"):
         print(f"Image couldn't be retrieved.")
 
 
-class OpenAIInterface:
+class OpenAI:
     def __init__(self, key: str = None, context: list = None) -> None:
         if key is not None:
             openai.api_key = key
@@ -65,8 +63,11 @@ class OpenAIInterface:
             you actually wrap the messages inside a python list.'''
 
     def get_voice_prompt(self, seconds: int = 6):
+        from utils import Recorder
         # FIXME(recording): make it inline instead of this crappy file saving
-        utils.record_audio(seconds, filename="prompt.wav")
+        with Recorder() as r:
+            r.record_for(seconds)
+            r.save_recording(filename="prompt.wav")
         return openai.Audio.translate(model=self.voice_model, file=open("prompt.wav", "rb")).text
 
     def get_messages(self, prompt: str) -> str:

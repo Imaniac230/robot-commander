@@ -3,7 +3,7 @@ import time
 
 import roslibpy
 
-from ai_interface import OpenAIInterface
+from ai_interface import OpenAI
 
 
 def args_factory() -> argparse.Namespace:
@@ -29,7 +29,7 @@ def main() -> None:
     context += ['Milos: ["x": 10.0 "y": -5.0 "w": 0.5]']
     context += ['Tomas: ["x": -12.0 "y": 10.0 "w": 1.0]']
     context += ['Milos window: ["x": 11.5 "y": -4.2 "w": 0.5]']
-    openai_interface = OpenAIInterface(key=args.key, context=context)
+    openai_interface = OpenAI(key=args.key, context=context)
 
     while True:
         try:

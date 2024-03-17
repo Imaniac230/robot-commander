@@ -1,1 +1,1 @@
-from .utils import record_audio
+from .utils import Recorder

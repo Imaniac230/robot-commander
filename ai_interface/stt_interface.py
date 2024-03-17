@@ -1,7 +1,8 @@
 import subprocess as sp
 import os
 
-class WhisperInterface:
+
+class Whisper:
     def __init__(self, model_path: str) -> None:
         self.model_path: str = model_path
         self.library_path: str = "/home/user/repos/foreign/whisper_cpp/"
@@ -20,8 +21,9 @@ class WhisperInterface:
         # a = sp.run(whisper_path + cmd)
         # print(f"\n\ntype: {type(a)}, data: {a}\n\n")
         # os.system(whisper_path + cmd + " -m " + model + " -f " + audio_file + args)
-        raw_output = sp.check_output(self.library_path + self.bin_path + "main -m " + self.model_path + " -f " + audio_file + args,
-                                     shell=True, text=True).split('\n')
+        raw_output = sp.check_output(
+            self.library_path + self.bin_path + "main -m " + self.model_path + " -f " + audio_file + args,
+            shell=True, text=True).split('\n')
         stripped_raw = []
         for line in raw_output:
             if len(line) > 0:
