@@ -2,7 +2,7 @@ import subprocess as sp
 import os
 
 
-class Whisper:
+class WhisperCPP:
     def __init__(self, model_path: str) -> None:
         self.model_path: str = model_path
         self.library_path: str = "/home/user/repos/foreign/whisper_cpp/"

@@ -18,6 +18,12 @@ class Recorder:
     def __del__(self):
         self.port.terminate()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__del__()
+
     def record_for(self, seconds: int) -> List[bytes]:
         stream = self.port.open(format=self.format, channels=self.channels, rate=self.rate,
                                 frames_per_buffer=self.chunk,

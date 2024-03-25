@@ -11,7 +11,7 @@ from bark.api import semantic_to_waveform
 class Bark:
     def __init__(self, model_path: str) -> None:
         self.model_path: str = model_path
-        self.speaker_voice: str = "v2/en_speaker_7"
+        self.speaker_voice: str = "v2/en_speaker_5"
         self.generated_file: str = "output_response.wav"
         self.last_generation = None
 
@@ -44,3 +44,10 @@ class Bark:
 
     def play_synthesis(self):
         sd.play(self.last_generation, SAMPLE_RATE, blocking=True)
+
+class BarkCPP:
+    def __init__(self, model_path: str) -> None:
+        self.model_path: str = model_path
+        self.speaker_voice: str = "v2/en_speaker_5"
+        self.generated_file: str = "output_response.wav"
+        self.last_generation = None
