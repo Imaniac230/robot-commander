@@ -1,8 +1,9 @@
 import os
-
 import openai
 import json
 import glob
+
+from pynput.keyboard import Key
 
 
 def generate_image(prompt: str, filename: str = "image.png"):
@@ -47,26 +48,32 @@ class OpenAI:
                 print(f'context:\n{self.context}')
             print(f'messages:\n{self.messages}')
 
-        self.init_prompt = ""
+        # self.init_prompt = ""
+        # if context is not None:
+        #     self.init_prompt += f'''
+        #         The following lines provide context for mapping any positions and orientations to keywords:
+        #         {self.context}'''
+        # self.init_prompt += f'''
+        #     Now, following are the actual format of the messages with their name as the tags <name></name>:
+        #     {self.messages}
+        #
+        #     Return a python list of these messages required in order to achieve the user's goals in ROS2 without any
+        #     explanation. Goals will be delimited by the <prompt> tags. Do not append the names of the messages in the
+        #     list. All the properties of the messages should be enclosed within double quotes. Each message represents
+        #     1 second of the goal done, so add messages for every second to the list according to the goals. Make sure
+        #     you actually wrap the messages inside a python list.'''
+
+        with open("/home/user/repos/foreign/llama_cpp/prompts/ros.txt") as f:
+            self.init_prompt = f.read()
+        self.init_prompt += f'''\nFollowing lines specify the format of the required messages with their name in tags <name></name>:\n{self.messages}\n'''
         if context is not None:
-            self.init_prompt += f'''
-                The following lines provide context for mapping any positions and orientations to keywords:
-                {self.context}'''
-        self.init_prompt += f'''
-            Now, following are the actual format of the messages with their name as the tags <name></name>:
-            {self.messages}
+            self.init_prompt += f'''Following lines provide context for mapping any position and orientation coordinates to keywords:\n{context}\n'''
 
-            Return a python list of these messages required in order to achieve the user's goals in ROS2 without any 
-            explanation. Goals will be delimited by the <prompt> tags. Do not append the names of the messages in the 
-            list. All the properties of the messages should be enclosed within double quotes. Each message represents 
-            1 second of the goal done, so add messages for every second to the list according to the goals. Make sure 
-            you actually wrap the messages inside a python list.'''
-
-    def get_voice_prompt(self, seconds: int = 6):
+    def get_voice_prompt(self, key: Key = Key.space):
         from utils import Recorder
         # FIXME(recording): make it inline instead of this crappy file saving
         with Recorder() as r:
-            r.record_for(seconds)
+            r.hold_to_record(key)
             r.save_recording(filename="prompt.wav")
         return openai.Audio.translate(model=self.voice_model, file=open("prompt.wav", "rb")).text
 

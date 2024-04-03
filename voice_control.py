@@ -25,16 +25,15 @@ def main() -> None:
     ros_client = roslibpy.Ros(host=args.host, port=args.port)
     ros_client.run()
 
-    context = ['Peter: ["x": 1.0 "y": 1.0 "w": 1.0]']
-    context += ['Milos: ["x": 10.0 "y": -5.0 "w": 0.5]']
-    context += ['Tomas: ["x": -12.0 "y": 10.0 "w": 1.0]']
-    context += ['Milos window: ["x": 11.5 "y": -4.2 "w": 0.5]']
+    context = ["Window={position: {x: 1.0, y: 1.0, z: 0.0}, orientation: {w: 1.0}}"]
+    context += ["Door={position: {x: 10.0, y: -5.0, z: 0.0}, orientation: {w: 0.5}}"]
+    context += ["Tomas={position: {x: -12.0, y: 10.0, z: 0.0}, orientation: {w: 1.0}}"]
+    context += ["Tomas window={position: {x: 11.5, y: -4.2, z: 0.0}, orientation: {w: 0.5}}"]
     openai_interface = OpenAI(key=args.key, context=context)
 
     while True:
         try:
-            input("Press enter to record the next command")
-            print("Recording...")
+            print("Press and hold 'space' to record your command ...")
             prompt = openai_interface.get_voice_prompt()
             print(f'Got prompt: "{prompt}"')
             print("Breaking down the goal and creating steps...")
