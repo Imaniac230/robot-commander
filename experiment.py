@@ -15,9 +15,9 @@ def conversation_agent(stt_model: str, llm_model: str, tts_model: str, tts_voice
     with open("prompts/robot-chat.txt") as f:
         initial_prompt = f.read()
 
+    whisper = WhisperCPP(stt_model)
     llama = LlamaCPP(llm_model, initial_prompt)
-    whisper = WhisperCPP(tts_model)
-    bark = Bark(stt_model, tts_voice)
+    bark = Bark(tts_model, tts_voice)
 
     print(f"\nPress and hold 'space' to record your prompt ...")
     # FIXME(recording): make it inline instead of this crappy file saving
@@ -81,8 +81,8 @@ def ros_publisher_agent(stt_model: str, llm_model: str) -> None:
         init_prompt += f'The following lines provide context for mapping any received keywords to corresponding properties of the JSON response:\n{ctx}\n'
         init_prompt += 'Make sure you always match all JSON property values exactly each time you detect a corresponding keyword.\n\n'
 
-    llama = LlamaCPP(llm_model, init_prompt)
     whisper = WhisperCPP(stt_model)
+    llama = LlamaCPP(llm_model, init_prompt)
 
     while True:
         try:
