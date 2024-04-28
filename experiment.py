@@ -114,9 +114,10 @@ def ros_publisher_agent(stt_model: str, llm_model: str) -> None:
 
 
 if __name__ == '__main__':
-    llm: str = "/media/user/data_ssd/models/llama2/llama-2-13b/ggml-model-q4_0.gguf"
-    stt: str = "/media/user/data_ssd/models/whisper/large/ggml-model-large-v3.bin"
-    tts: str = "/media/user/data_ssd/models/bark/"
+    models: str = "/media/user/data_ssd/models"
+    llm: str = models + "/llama2/llama-2-13b/ggml-model-q4_0.gguf"
+    stt: str = models + "/whisper/large/ggml-model-q4_0-large-v3.bin"
+    tts: str = models + "/bark/"
     tts_voice: str = "v2/en_speaker_5"
 
     conversation_agent(stt, llm, tts, tts_voice)

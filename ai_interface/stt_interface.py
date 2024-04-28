@@ -9,7 +9,7 @@ class STTInterface:
 
 class WhisperCPP(STTInterface):
     # This should only be a minimal wrapper for the whisper.cpp project
-    # and its examples, so that we can always support the lates versions.
+    # and its examples, so that we can always support the latest versions.
     # We should not have to maintain any custom implementations here.
     # For a custom implementation, see https://github.com/mgonzs13/whisper_ros
     # with a more native integration of the whisper.cpp library functions into ROS.
