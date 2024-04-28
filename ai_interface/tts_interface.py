@@ -7,13 +7,22 @@ from bark import generate_audio, SAMPLE_RATE
 from bark.generation import generate_text_semantic
 from bark.api import semantic_to_waveform
 
+#TODO(interfaces): create a genralized interface class that would be inherited by the various specializations here
+class TTSInterface:
+    def __init__(self) -> None:
+        pass
 
-class Bark:
-    def __init__(self, model_path: str) -> None:
+
+class Bark(TTSInterface):
+    def __init__(self, model_path: str, voice: str = "speaker_0") -> None:
         self.model_path: str = model_path
-        self.speaker_voice: str = "v2/en_speaker_5"
+        self.speaker_voice: str = voice
         self.generated_file: str = "output_response.wav"
+
         self.last_generation = None
+    
+    def start_server(self) -> bool:
+        raise NotImplementedError
 
     def synthesize_short(self, short_prompt: str):
         self.last_generation = generate_audio(short_prompt, history_prompt=self.speaker_voice,
@@ -43,11 +52,23 @@ class Bark:
         return self.last_generation
 
     def play_synthesis(self):
-        sd.play(self.last_generation, SAMPLE_RATE, blocking=True)
+        if self.last_generation is not None:
+            sd.play(self.last_generation, SAMPLE_RATE, blocking=True)
 
-class BarkCPP:
+
+class BarkCPP(TTSInterface):
     def __init__(self, model_path: str) -> None:
         self.model_path: str = model_path
         self.speaker_voice: str = "v2/en_speaker_5"
         self.generated_file: str = "output_response.wav"
         self.last_generation = None
+
+    def start_server(self) -> bool:
+        raise NotImplementedError("implement bark_cpp")
+
+    def synthesize(self, prompt: str):
+        raise NotImplementedError("implement bark_cpp")
+
+    def play_synthesis(self):
+        if self.last_generation is not None:
+            sd.play(self.last_generation, SAMPLE_RATE, blocking=True)
