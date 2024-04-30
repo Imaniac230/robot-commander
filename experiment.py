@@ -105,7 +105,7 @@ def ros_publisher_agent(stt_model: str, llm_model: str) -> None:
         initial_prompt=init_prompt,
         n_of_tokens_to_predict=-1,  # gauge this reasonably
         n_of_gpu_layers_to_offload=43,
-        grammar_file_path=str(os.path.realpath(__package__).rstrip(os.path.basename(__package__)) + 'grammars/posestamped.gbnf'),
+        grammar_file_path=str(os.path.realpath(__file__).rstrip(os.path.basename(__file__))) + 'grammars/posestamped.gbnf',
         server_hostname=socket.gethostbyname(socket.gethostname()),
         server_port=8080,
         n_of_parallel_server_requests=1
@@ -147,5 +147,5 @@ if __name__ == '__main__':
     tts: str = models + "/bark/"
     tts_voice: str = "v2/en_speaker_5"
 
-    conversation_agent(stt, llm, tts, tts_voice)
-    # ros_publisher_agent(stt, llm)
+    # conversation_agent(stt, llm, tts, tts_voice)
+    ros_publisher_agent(stt, llm)
