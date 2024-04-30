@@ -11,7 +11,7 @@ def generate_image(prompt: str, filename: str = "image.png"):
     import shutil
 
     url = openai.Image.create(prompt=prompt, n=1, size='256x256')['data'][0]['url']
-    if os.getenv("DEBUG") is not None:
+    if int(os.getenv("DEBUG", "0")) >= 1:
         print(f"{url}")
 
     r = requests.get(url, stream=True)
@@ -43,7 +43,7 @@ class OpenAI:
         for item in context:
             self.context += item + "\n"
 
-        if os.getenv("DEBUG") is not None:
+        if int(os.getenv("DEBUG", "0")) >= 1:
             if context is not None:
                 print(f'context:\n{self.context}')
             print(f'messages:\n{self.messages}')
@@ -81,7 +81,7 @@ class OpenAI:
         messages = [{"role": "system", "content": self.init_prompt},
                     {"role": "user", "content": f"<prompt>{prompt}<prompt>"}]
         response = openai.ChatCompletion.create(model=self.chat_model, messages=messages, temperature=0.7)
-        if os.getenv("DEBUG") is not None:
+        if int(os.getenv("DEBUG", "0")) >= 1:
             print(f'raw response:\n{response.choices[0].message["content"]}')
         res = json.loads(response.choices[0].message["content"])
         return res

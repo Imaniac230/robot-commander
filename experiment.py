@@ -1,5 +1,5 @@
 from utils import Recorder
-from ai_interface import LlamaCPP, WhisperCPP, Bark
+from ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, Bark, TTSParams
 from pynput.keyboard import Key
 
 import argparse
@@ -8,15 +8,28 @@ import roslibpy
 import os
 import glob
 import json
+import socket
 
 
 def conversation_agent(stt_model: str, llm_model: str, tts_model: str, tts_voice: str) -> None:
     input_recording: str = "input_recording.wav"
-    with open("prompts/robot-chat.txt") as f:
-        initial_prompt = f.read()
+    with open("prompts/robot-chat.txt") as f: initial_prompt = f.read()
 
-    whisper = WhisperCPP(stt_model)
-    llama = LlamaCPP(llm_model, initial_prompt)
+    whisper = WhisperCPP(STTParams(
+        model_path=stt_model,
+        initial_prompt="",
+        server_hostname=socket.gethostbyname(socket.gethostname()),
+        server_port=8080
+    ))
+    llama = LlamaCPP(LLMParams(
+        model_path=llm_model,
+        initial_prompt=initial_prompt,
+        n_of_tokens_to_predict=-1,  # gauge this reasonably
+        n_of_gpu_layers_to_offload=43,
+        server_hostname=socket.gethostbyname(socket.gethostname()),
+        server_port=8080,
+        n_of_parallel_server_requests=1
+    ))
     bark = Bark(tts_model, tts_voice)
 
     print(f"\nPress and hold 'space' to record your prompt ...")
@@ -68,7 +81,7 @@ def ros_publisher_agent(stt_model: str, llm_model: str) -> None:
     for item in context:
         ctx += item + "\n"
 
-    if os.getenv("DEBUG") is not None:
+    if int(os.getenv("DEBUG", "0")) >= 1:
         if ctx is not None:
             print(f'context:\n{ctx}')
         print(f'messages:\n{messages}')
@@ -81,8 +94,22 @@ def ros_publisher_agent(stt_model: str, llm_model: str) -> None:
         init_prompt += f'The following lines provide context for mapping any received keywords to corresponding properties of the JSON response:\n{ctx}\n'
         init_prompt += 'Make sure you always match all JSON property values exactly each time you detect a corresponding keyword.\n\n'
 
-    whisper = WhisperCPP(stt_model)
-    llama = LlamaCPP(llm_model, init_prompt)
+    whisper = WhisperCPP(STTParams(
+        model_path=stt_model,
+        initial_prompt="",
+        server_hostname=socket.gethostbyname(socket.gethostname()),
+        server_port=8080
+    ))
+    llama = LlamaCPP(LLMParams(
+        model_path=llm_model,
+        initial_prompt=init_prompt,
+        n_of_tokens_to_predict=-1,  # gauge this reasonably
+        n_of_gpu_layers_to_offload=43,
+        grammar_file_path=str(os.path.realpath(__package__).rstrip(os.path.basename(__package__)) + 'grammars/posestamped.gbnf'),
+        server_hostname=socket.gethostbyname(socket.gethostname()),
+        server_port=8080,
+        n_of_parallel_server_requests=1
+    ))
 
     while True:
         try:
@@ -115,7 +142,7 @@ def ros_publisher_agent(stt_model: str, llm_model: str) -> None:
 
 if __name__ == '__main__':
     models: str = "/media/user/data_ssd/models"
-    llm: str = models + "/llama2/llama-2-13b/ggml-model-q4_0.gguf"
+    llm: str = models + "/llama3/Meta-Llama-3-8B/ggml-model-q4_0.gguf"
     stt: str = models + "/whisper/large/ggml-model-q4_0-large-v3.bin"
     tts: str = models + "/bark/"
     tts_voice: str = "v2/en_speaker_5"

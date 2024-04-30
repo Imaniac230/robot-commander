@@ -2,25 +2,34 @@ from scipy.io.wavfile import write as write_wav
 import nltk
 import numpy as np
 import sounddevice as sd
+from dataclasses import dataclass
+import threading as th
+from typing_extensions import Self
 
 from bark import generate_audio, SAMPLE_RATE
 from bark.generation import generate_text_semantic
 from bark.api import semantic_to_waveform
 
-#TODO(interfaces): create a genralized interface class that would be inherited by the various specializations here
-class TTSInterface:
+
+@dataclass
+class TTSParams: pass
+
+
+# TODO(interfaces): create a genralized interface class that would be inherited by the various specializations here
+class TTS:
     def __init__(self) -> None:
         pass
 
 
-class Bark(TTSInterface):
+class Bark(TTS):
     def __init__(self, model_path: str, voice: str = "speaker_0") -> None:
+        super().__init__()
         self.model_path: str = model_path
         self.speaker_voice: str = voice
         self.generated_file: str = "output_response.wav"
 
         self.last_generation = None
-    
+
     def start_server(self) -> bool:
         raise NotImplementedError
 
@@ -56,8 +65,9 @@ class Bark(TTSInterface):
             sd.play(self.last_generation, SAMPLE_RATE, blocking=True)
 
 
-class BarkCPP(TTSInterface):
+class BarkCPP(TTS):
     def __init__(self, model_path: str) -> None:
+        super().__init__()
         self.model_path: str = model_path
         self.speaker_voice: str = "v2/en_speaker_5"
         self.generated_file: str = "output_response.wav"
