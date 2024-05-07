@@ -1,6 +1,7 @@
 from utils import Recorder
 from ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, Bark, TTSParams
 from pynput.keyboard import Key
+from commander import Agent
 
 import argparse
 import time
@@ -30,7 +31,10 @@ def conversation_agent(stt_model: str, llm_model: str, tts_model: str, tts_voice
         server_port=8080,
         n_of_parallel_server_requests=1
     ))
-    bark = Bark(tts_model, tts_voice)
+    bark = Bark(TTSParams(
+        model_path=tts_model,
+        voice=tts_voice
+    ))
 
     print(f"\nPress and hold 'space' to record your prompt ...")
     # FIXME(recording): make it inline instead of this crappy file saving
@@ -55,8 +59,7 @@ def ros_publisher_agent(stt_model: str, llm_model: str) -> None:
     parser.add_argument('--type', type=str, required=True, help='Message type for the topic.')
     args = parser.parse_args()
 
-    ros_client = roslibpy.Ros(host=args.host, port=args.port)
-    ros_client.run()
+    ros_client = roslibpy.Ros(host=args.host, port=args.port).run()
 
     context = ['keyword: window -> frame_id: map, position: {x: 1.0, y: 1.0, z: 0.0}, orientation: {w: 1.0}']
     context += ['keyword: door -> frame_id: map, position: {x: 10.0, y: -5.0, z: 0.0}, orientation: {w: 0.5}']
@@ -139,13 +142,33 @@ def ros_publisher_agent(stt_model: str, llm_model: str) -> None:
 
     ros_client.terminate()
 
+def agents(stt_model: str, llm_model: str):
+    conversation_agent: Agent = Agent(
+        WhisperCPP(STTParams(
+            model_path=stt_model,
+            initial_prompt="",
+            server_hostname=socket.gethostbyname(socket.gethostname()),
+            server_port=8081
+        )),
+        LlamaCPP(LLMParams(
+            model_path=llm_model,
+            initial_prompt="You are a helpful assistant.",
+            n_of_tokens_to_predict=-1,  # gauge this reasonably
+            n_of_gpu_layers_to_offload=43,
+            server_hostname=socket.gethostbyname(socket.gethostname()),
+            server_port=8080,
+            n_of_parallel_server_requests=1
+        )),
+    ).launch()
+
 
 if __name__ == '__main__':
     models: str = "/media/user/data_ssd/models"
-    llm: str = models + "/llama3/Meta-Llama-3-8B/ggml-model-q4_0.gguf"
+    llm: str = models + "/llama3/Meta-Llama-3-8B/ggml-model-q4_0-fromhf-replacedtokenizer-with-convert-hf.gguf"
     stt: str = models + "/whisper/large/ggml-model-q4_0-large-v3.bin"
     tts: str = models + "/bark/"
     tts_voice: str = "v2/en_speaker_5"
 
     # conversation_agent(stt, llm, tts, tts_voice)
-    ros_publisher_agent(stt, llm)
+    # ros_publisher_agent(stt, llm)
+    agents(stt, llm)
