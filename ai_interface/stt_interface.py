@@ -3,6 +3,7 @@ import os
 from dataclasses import dataclass
 import threading as th
 from typing_extensions import Self
+from typing import List
 
 
 @dataclass
@@ -41,14 +42,14 @@ class WhisperCPP(STT):
         self.library_path: str = str(os.path.realpath(__package__).rstrip(os.path.basename(__package__))) + 'libs/whisper_cpp'
         self.bin_path: str = "build/bin"
         # TODO: check failures
-        self.server_worker = th.Thread(target=sp.run, args=self._build_command("server"))
+        self.server_worker = th.Thread(target=sp.run, args=[self._build_command("server")])
 
-    def _build_command(self, command: str, file: str = "") -> [str]:
+    def _build_command(self, command: str, file: str = "") -> List[str]:
         full_command: str = self.library_path + '/' + self.bin_path + '/' + command
 
         # implicit params
         # use translation mode if speaking in other than english
-        args: [str] = ["--translate", "--language", "auto"]
+        args: List[str] = ["--translate", "--language", "auto"]
         # configurable params (required)
         args += ["--model", self.params.model_path]
         # this could be optional instead of passing an empty string
@@ -58,7 +59,7 @@ class WhisperCPP(STT):
 
         if command == "server":
             if self.params.server_hostname is not None: args += ["--host", self.params.server_hostname]
-            if self.params.server_port is not None: args += ["--port", self.params.server_port]
+            if self.params.server_port is not None: args += ["--port", str(self.params.server_port)]
         elif command == "main":
             args += ["--file", file]
         else:

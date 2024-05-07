@@ -2,8 +2,8 @@ import subprocess as sp
 import os
 from dataclasses import dataclass
 import threading as th
-
 from typing_extensions import Self
+from typing import List
 
 
 @dataclass
@@ -47,14 +47,14 @@ class LlamaCPP(LLM):
         self.library_path: str = str(os.path.realpath(__package__).rstrip(os.path.basename(__package__))) + 'libs/llama_cpp'
         self.bin_path: str = "build/bin"
         # TODO: check failures
-        self.server_worker = th.Thread(target=sp.run, args=self._build_command("server"))
+        self.server_worker = th.Thread(target=sp.run, args=[self._build_command("server")])
 
-    def _build_command(self, command: str, prompt: str = "") -> [str]:
+    def _build_command(self, command: str, prompt: str = "") -> List[str]:
         full_command: str = self.library_path + '/' + self.bin_path + '/' + command
 
         # implicit params
         # load context size from model hparams
-        args: [str] = ["--ctx-size", str(0)]
+        args: List[str] = ["--ctx-size", str(0)]
         # configurable params (required)
         args += ["--model", self.params.model_path]
         args += ["--n-predict", str(self.params.n_of_tokens_to_predict)]
@@ -67,9 +67,9 @@ class LlamaCPP(LLM):
             # publish server metrics
             args += ["--metrics"]
             # configurable params (optional, default by llama.cpp implementation)
-            if self.params.n_of_parallel_server_requests is not None: args += ["--parallel", self.params.n_of_parallel_server_requests]
+            if self.params.n_of_parallel_server_requests is not None: args += ["--parallel", str(self.params.n_of_parallel_server_requests)]
             if self.params.server_hostname is not None: args += ["--host", self.params.server_hostname]
-            if self.params.server_port is not None: args += ["--port", self.params.server_port]
+            if self.params.server_port is not None: args += ["--port", str(self.params.server_port)]
             # [grammar, temperature] are specified in each server request
             # initial prompt is specified in a json config to server at launch
         elif command == "main":
