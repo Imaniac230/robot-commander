@@ -3,7 +3,7 @@ import os
 from dataclasses import dataclass
 import threading as th
 from typing_extensions import Self
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -11,20 +11,20 @@ class LLMParams:
     model_path: str
     initial_prompt: str
     n_of_tokens_to_predict: int
-    temperature: float = None
-    n_of_gpu_layers_to_offload: int = None
-    grammar_file_path: str = None
-    server_hostname: str = None
-    server_port: int = None
-    n_of_parallel_server_requests: int = None
-    n_of_threads_to_use: int = None
+    temperature: Optional[float] = None
+    n_of_gpu_layers_to_offload: Optional[int] = None
+    grammar_file_path: Optional[str] = None
+    server_hostname: Optional[str] = None
+    server_port: Optional[int] = None
+    n_of_parallel_server_requests: Optional[int] = None
+    n_of_threads_to_use: Optional[int] = None
 
 
 class LLM:
     def __init__(self, params: LLMParams) -> None:
         self.params: LLMParams = params
         self.last_response: str = ""
-        self.server_worker: th.Thread | None = None
+        self.server_worker: Optional[th.Thread] = None
 
     def __del__(self):
         if self.server_worker is not None and self.server_worker.is_alive(): self.server_worker.join()
@@ -32,6 +32,8 @@ class LLM:
     def start_server(self) -> Self:
         if self.server_worker is not None and not self.server_worker.is_alive(): self.server_worker.start()
         return self
+
+    def respond(self, prompt: str, *args, **kwargs) -> str: pass
 
 
 class LlamaCPP(LLM):

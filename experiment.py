@@ -143,7 +143,7 @@ def ros_publisher_agent(stt_model: str, llm_model: str) -> None:
     ros_client.terminate()
 
 def agents(stt_model: str, llm_model: str):
-    conversation_agent: Agent = Agent(
+    conversation: Agent = Agent(
         WhisperCPP(STTParams(
             model_path=stt_model,
             initial_prompt="",
@@ -161,13 +161,20 @@ def agents(stt_model: str, llm_model: str):
         )),
     ).launch()
 
+    print(f"\nPress and hold 'space' to record your command ...\n")
+    # FIXME(recording): make it inline instead of this crappy file saving
+    with Recorder(frequency_hz=16000) as r:
+        r.hold_to_record(Key.space)
+        r.save_recording("recording.wav")
+    conversation.respond("recording.wav")
+
 
 if __name__ == '__main__':
     models: str = "/media/user/data_ssd/models"
-    llm: str = models + "/llama3/Meta-Llama-3-8B/ggml-model-q4_0-fromhf-replacedtokenizer-with-convert-hf.gguf"
+    llm: str = models + "/llama3/Meta-Llama-3-8B/ggml-model-q4_0-fromhf-origtokenizer-with-convert-hf.gguf"
     stt: str = models + "/whisper/large/ggml-model-q4_0-large-v3.bin"
     tts: str = models + "/bark/"
-    tts_voice: str = "v2/en_speaker_5"
+    tts_voice: str = "announcer"
 
     # conversation_agent(stt, llm, tts, tts_voice)
     # ros_publisher_agent(stt, llm)

@@ -5,7 +5,7 @@ import sounddevice as sd
 from dataclasses import dataclass
 import threading as th
 from typing_extensions import Self
-from typing import List, Any
+from typing import List, Any, Optional
 
 from bark import generate_audio, SAMPLE_RATE
 from bark.generation import generate_text_semantic
@@ -23,7 +23,7 @@ class TTS:
         self.params: TTSParams = params
         self.last_generation: Any = None
         self.generated_file: str = "output_response.wav"
-        self.server_worker: th.Thread | None = None
+        self.server_worker: Optional[th.Thread] = None
     
     def __del__(self):
         if self.server_worker is not None and self.server_worker.is_alive(): self.server_worker.join()
@@ -31,6 +31,8 @@ class TTS:
     def start_server(self) -> Self:
         if self.server_worker is not None and not self.server_worker.is_alive(): self.server_worker.start()
         return self
+
+    def synthesize(self, prompt: str, *args, **kwargs) -> Any: pass
     
     def play_synthesis(self):
         if self.last_generation is not None:
@@ -40,9 +42,6 @@ class TTS:
 class Bark(TTS):
     def __init__(self, params: TTSParams) -> None:
         super().__init__(params)
-
-    def start_server(self) -> bool:
-        raise NotImplementedError
 
     def synthesize_short(self, short_prompt: str) -> Any:
         self.last_generation = generate_audio(short_prompt, history_prompt=self.params.voice,
@@ -76,8 +75,5 @@ class BarkCPP(TTS):
     def __init__(self, params: TTSParams) -> None:
         super().__init__(params)
 
-    def start_server(self) -> bool:
-        raise NotImplementedError("implement bark_cpp")
-
-    def synthesize(self, prompt: str):
+    def synthesize(self, prompt: str) -> Any:
         raise NotImplementedError("implement bark_cpp")
