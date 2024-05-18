@@ -1,9 +1,10 @@
-import subprocess as sp
-import os
 from dataclasses import dataclass
-import threading as th
 from typing_extensions import Self
 from typing import List, Optional
+
+import subprocess as sp
+import threading as th
+import os
 
 
 @dataclass
@@ -71,7 +72,7 @@ class WhisperCPP(STT):
 
     def transcribe(self, audio_file: str, load_model: bool = False) -> str:
         if load_model:
-            raw_output: list[str] = sp.check_output(self._build_command("main", audio_file), text=True).split('\n')
+            raw_output: List[str] = sp.check_output(self._build_command("main", audio_file), text=True).split('\n')
             stripped_raw = []
             for line in raw_output:
                 if len(line) > 0:

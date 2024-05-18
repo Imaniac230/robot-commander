@@ -1,15 +1,16 @@
 from scipy.io.wavfile import write as write_wav
-import nltk
-import numpy as np
-import sounddevice as sd
 from dataclasses import dataclass
-import threading as th
 from typing_extensions import Self
 from typing import List, Any, Optional
 
 from bark import generate_audio, SAMPLE_RATE
 from bark.generation import generate_text_semantic
 from bark.api import semantic_to_waveform
+
+import sounddevice as sd
+import numpy as np
+import threading as th
+import nltk
 
 
 @dataclass

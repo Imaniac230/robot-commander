@@ -2,11 +2,11 @@ repositories:
   libs/llama_cpp:
     type: git
     url: https://github.com/ggerganov/llama.cpp.git
-    version: b2794
+    version: b2915
   libs/whisper_cpp:
     type: git
     url: https://github.com/ggerganov/whisper.cpp.git
-    version: v1.5.5
+    version: v1.6.0
   libs/bark:
     type: git
     url: https://github.com/Imaniac230/bark.git

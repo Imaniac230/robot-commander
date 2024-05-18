@@ -1,75 +1,32 @@
+from dataclasses import dataclass
+from typing import Optional, Any
+from pynput.keyboard import Key
+
 import os
 import openai
 import json
-import glob
-
-from pynput.keyboard import Key
 
 
-def generate_image(prompt: str, filename: str = "image.png"):
-    import requests
-    import shutil
-
-    url = openai.Image.create(prompt=prompt, n=1, size='256x256')['data'][0]['url']
-    if int(os.getenv("DEBUG", "0")) >= 1:
-        print(f"{url}")
-
-    r = requests.get(url, stream=True)
-    if r.status_code == 200:
-        r.raw.decode_content = True
-        with open(filename, 'wb') as f:
-            shutil.copyfileobj(r.raw, f)
-
-        print(f"Image '{filename}' downloaded.")
-    else:
-        print(f"Image couldn't be retrieved.")
+@dataclass
+class OpenAIParams:
+    api_key: str
+    chat_model: str = "gpt-3.5-turbo"
+    voice_model: str = "whisper-1"
+    image_size: str = "256x256"
+    initial_chat_prompt: Optional[str] = None
 
 
 class OpenAI:
-    def __init__(self, key: str = None, context: list = None) -> None:
-        if key is not None:
-            openai.api_key = key
-        self.chat_model = "gpt-3.5-turbo"
-        self.voice_model = "whisper-1"
+    def __init__(self, params: OpenAIParams) -> None:
+        openai.api_key = params.api_key
 
-        self.messages = ""
-        for file in glob.glob("messages/*.txt"):
-            self.messages += "<" + os.path.basename(file).split('.')[0] + ">"
-            with open(file, 'r') as rd:
-                self.messages += rd.read()
-            self.messages += "</" + os.path.basename(file).split('.')[0] + ">" + "\n"
+        self.chat_model: str = params.chat_model
+        self.voice_model: str = params.voice_model
+        self.image_size: str = params.image_size
 
-        self.context = ""
-        for item in context:
-            self.context += item + "\n"
+        self.init_prompt: str = params.initial_chat_prompt if params.initial_chat_prompt is not None else ""
 
-        if int(os.getenv("DEBUG", "0")) >= 1:
-            if context is not None:
-                print(f'context:\n{self.context}')
-            print(f'messages:\n{self.messages}')
-
-        # self.init_prompt = ""
-        # if context is not None:
-        #     self.init_prompt += f'''
-        #         The following lines provide context for mapping any positions and orientations to keywords:
-        #         {self.context}'''
-        # self.init_prompt += f'''
-        #     Now, following are the actual format of the messages with their name as the tags <name></name>:
-        #     {self.messages}
-        #
-        #     Return a python list of these messages required in order to achieve the user's goals in ROS2 without any
-        #     explanation. Goals will be delimited by the <prompt> tags. Do not append the names of the messages in the
-        #     list. All the properties of the messages should be enclosed within double quotes. Each message represents
-        #     1 second of the goal done, so add messages for every second to the list according to the goals. Make sure
-        #     you actually wrap the messages inside a python list.'''
-
-        with open("/home/user/repos/foreign/llama_cpp/prompts/ros.txt") as f:
-            self.init_prompt = f.read()
-        self.init_prompt += f'''\nFollowing lines specify the format of the required messages with their name in tags <name></name>:\n{self.messages}\n'''
-        if context is not None:
-            self.init_prompt += f'''Following lines provide context for mapping any position and orientation coordinates to keywords:\n{context}\n'''
-
-    def get_voice_prompt(self, key: Key = Key.space):
+    def get_voice_prompt(self, key: Key = Key.space) -> str:
         from utils import Recorder
         # FIXME(recording): make it inline instead of this crappy file saving
         with Recorder() as r:
@@ -83,5 +40,21 @@ class OpenAI:
         response = openai.ChatCompletion.create(model=self.chat_model, messages=messages, temperature=0.7)
         if int(os.getenv("DEBUG", "0")) >= 1:
             print(f'raw response:\n{response.choices[0].message["content"]}')
-        res = json.loads(response.choices[0].message["content"])
-        return res
+        return json.loads(response.choices[0].message["content"])
+
+    def generate_image(self, prompt: str, filename: str = "image.png"):
+        import requests
+        import shutil
+
+        url = openai.Image.create(prompt=prompt, n=1, size=self.image_size)['data'][0]['url']
+        if int(os.getenv("DEBUG", "0")) >= 1:
+            print(f"{url}")
+
+        r = requests.get(url, stream=True)
+        if r.status_code == 200:
+            r.raw.decode_content = True
+            with open(filename, 'wb') as f:
+                shutil.copyfileobj(r.raw, f)
+            print(f"Image '{filename}' downloaded.")
+        else:
+            print("Image couldn't be retrieved.")

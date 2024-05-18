@@ -1,9 +1,10 @@
-import subprocess as sp
-import os
 from dataclasses import dataclass
-import threading as th
 from typing_extensions import Self
 from typing import List, Optional
+
+import subprocess as sp
+import threading as th
+import os
 
 
 @dataclass
