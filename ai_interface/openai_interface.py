@@ -9,16 +9,16 @@ import json
 
 @dataclass
 class OpenAIParams:
-    api_key: str
     chat_model: str = "gpt-3.5-turbo"
     voice_model: str = "whisper-1"
     image_size: str = "256x256"
     initial_chat_prompt: Optional[str] = None
+    api_key: Optional[str] = None
 
 
 class OpenAI:
     def __init__(self, params: OpenAIParams) -> None:
-        openai.api_key = params.api_key
+        if params.api_key is not None: openai.api_key = params.api_key
 
         self.chat_model: str = params.chat_model
         self.voice_model: str = params.voice_model
