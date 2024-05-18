@@ -5,6 +5,7 @@ import time
 import roslibpy
 import glob
 import os
+import json
 
 
 def ros_factory() -> Tuple[roslibpy.Ros, argparse.Namespace]:
@@ -14,9 +15,12 @@ def ros_factory() -> Tuple[roslibpy.Ros, argparse.Namespace]:
     parser.add_argument('--port', type=int, default='9090', help='ROS port.')
     parser.add_argument('--topic', type=str, required=True, help='Topic for commanding the robot.')
     parser.add_argument('--type', type=str, required=True, help='Message type for the topic.')
-    args = parser.parse_args()
+    args: argparse.Namespace = parser.parse_args()
 
-    return roslibpy.Ros(host=args.host, port=args.port).run(), args
+    ros = roslibpy.Ros(host=args.host, port=args.port)
+    ros.run()
+
+    return ros, args
 
 
 # TODO(prompt-factory): create a class for this
@@ -64,12 +68,24 @@ def openai_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_
 
     ros_client: roslibpy.Ros = system_init[0]
     args: argparse.Namespace = system_init[1]
-    openai_interface = OpenAI(OpenAIParams(api_key=args.key, initial_chat_prompt=prompt_init["chat"]))
+    ros_agent = OpenAI(OpenAIParams(api_key=args.key, initial_chat_prompt=prompt_init["ros"]))
+    chat_agent = OpenAI(OpenAIParams(api_key=args.key, initial_chat_prompt=prompt_init["chat"]))
     while True:
         try:
-            print("Press and hold 'space' to record your command ...")
-            messages = openai_interface.get_messages(openai_interface.get_voice_prompt())
-            print("Done...")
+            print("\nPress and hold 'space' to record your command ...\n")
+            prompt: str = chat_agent.get_voice_prompt()
+
+            print("\nResponding ...")
+            response: str = chat_agent.get_messages(prompt)
+            print("\nDone")
+
+            print(f"\nsummary:\n\t"
+                  f"(whisper)\n\t-> '{prompt}' -> "
+                  f"(chatgpt)\n\t-> '{response}'")
+
+            print("\nGenerating commands ...")
+            messages = json.loads(ros_agent.get_messages(prompt))
+            print("\nDone")
 
             publisher = roslibpy.Topic(ros_client, args.topic, args.type)
             if ros_client.is_connected:
@@ -79,7 +95,8 @@ def openai_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_
                     time.sleep(1)
         except KeyboardInterrupt:
             break
-        except:
+        except Exception as e:
+            print(f"Failed to perform all tasks, error: {e}")
             continue
 
     ros_client.terminate()
@@ -91,7 +108,6 @@ def local_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_i
     from pynput.keyboard import Key
     from commander import Agent
 
-    import json
     import socket
 
     ros_client: roslibpy.Ros = system_init[0]
@@ -172,7 +188,8 @@ def local_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_i
                     time.sleep(1)
         except KeyboardInterrupt:
             break
-        except:
+        except Exception as e:
+            print(f"Failed to perform all tasks, error: {e}")
             continue
 
     ros_client.terminate()
@@ -187,4 +204,4 @@ if __name__ == '__main__':
     tts_voice: str = "announcer"
 
     openai_example(ros_factory(), prompt_factory())
-    local_example(ros_factory(), prompt_factory(), dict(stt=stt, llm=llm, tts=tts, tts_voice=tts_voice))
+    # local_example(ros_factory(), prompt_factory(), dict(stt=stt, llm=llm, tts=tts, tts_voice=tts_voice))
