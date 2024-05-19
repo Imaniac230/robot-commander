@@ -25,7 +25,7 @@ class OpenAI:
 
         self.init_prompt: str = params.initial_chat_prompt if params.initial_chat_prompt is not None else ""
 
-    def get_voice_prompt(self, key: Key = Key.space) -> str:
+    def get_voice_prompt(self, key: Key = Key.f10) -> str:
         from utils import Recorder
         # FIXME(recording): make it inline instead of this crappy file saving
         with Recorder() as r:

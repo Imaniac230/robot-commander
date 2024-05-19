@@ -8,6 +8,16 @@ import os
 import json
 
 
+def local_model_factory() -> Dict[str, str]:
+    # models: str = "/run/user/1000/gvfs/smb-share:server=starlink-nas.local,share=data%20nas/models"
+    models: str = "/media/user/data_ssd/models"
+    llm: str = models + "/llama3/Meta-Llama-3-8B/ggml-model-q4_0-fromhf-origtokenizer-with-convert-hf.gguf"
+    stt: str = models + "/whisper/large/ggml-model-q4_0-large-v3.bin"
+    tts: str = models + "/bark/"
+    tts_voice: str = "announcer"
+    return dict(stt=stt, llm=llm, tts=tts, tts_voice=tts_voice)
+
+
 def ros_factory() -> Tuple[roslibpy.Ros, argparse.Namespace]:
     parser = argparse.ArgumentParser()
     parser.add_argument('--key', type=str, default=None, help='OpenAI API key.')
@@ -72,7 +82,7 @@ def openai_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_
     chat_agent = OpenAI(OpenAIParams(api_key=args.key, initial_chat_prompt=prompt_init["chat"]))
     while True:
         try:
-            print("\nPress and hold 'space' to record your command ...\n")
+            print("\nPress and hold 'F10' to record your command ...\n")
             prompt: str = chat_agent.get_voice_prompt()
 
             print("\nResponding ...")
@@ -156,10 +166,10 @@ def local_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_i
 
     while True:
         try:
-            print("\nPress and hold 'space' to record your command ...\n")
+            print("\nPress and hold 'F10' to record your command ...\n")
             # FIXME(recording): make it inline instead of this crappy file saving
             with Recorder(frequency_hz=16000) as r:
-                r.hold_to_record(Key.space)
+                r.hold_to_record(Key.f10)
                 r.save_recording(input_recording)
             print(f"\nDone, created file: {input_recording}")
 
@@ -196,12 +206,5 @@ def local_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_i
 
 
 if __name__ == '__main__':
-    # models: str = "/run/user/1000/gvfs/smb-share:server=starlink-nas.local,share=data%20nas/models"
-    models: str = "/media/user/data_ssd/models"
-    llm: str = models + "/llama3/Meta-Llama-3-8B/ggml-model-q4_0.gguf"
-    stt: str = models + "/whisper/large/ggml-model-q4_0-large-v3.bin"
-    tts: str = models + "/bark/"
-    tts_voice: str = "announcer"
-
-    openai_example(ros_factory(), prompt_factory())
-    # local_example(ros_factory(), prompt_factory(), dict(stt=stt, llm=llm, tts=tts, tts_voice=tts_voice))
+    # openai_example(ros_factory(), prompt_factory())
+    local_example(ros_factory(), prompt_factory(), local_model_factory())
