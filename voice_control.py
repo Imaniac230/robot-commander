@@ -78,8 +78,8 @@ def openai_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_
 
     ros_client: roslibpy.Ros = system_init[0]
     args: argparse.Namespace = system_init[1]
-    ros_agent = OpenAI(OpenAIParams(api_key=args.key, initial_chat_prompt=prompt_init["ros"]))
-    chat_agent = OpenAI(OpenAIParams(api_key=args.key, initial_chat_prompt=prompt_init["chat"]))
+    ros_agent = OpenAI(OpenAIParams(api_key=args.key, chat_initial_prompt=prompt_init["ros"]))
+    chat_agent = OpenAI(OpenAIParams(api_key=args.key, chat_initial_prompt=prompt_init["chat"]))
     while True:
         try:
             print("\nPress and hold 'F10' to record your command ...\n")
@@ -87,6 +87,7 @@ def openai_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_
 
             print("\nResponding ...")
             response: str = chat_agent.get_messages(prompt)
+            chat_agent.generate_audio(response)
             print("\nDone")
 
             print(f"\nsummary:\n\t"
@@ -206,5 +207,5 @@ def local_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_i
 
 
 if __name__ == '__main__':
-    # openai_example(ros_factory(), prompt_factory())
-    local_example(ros_factory(), prompt_factory(), local_model_factory())
+    openai_example(ros_factory(), prompt_factory())
+    # local_example(ros_factory(), prompt_factory(), local_model_factory())
