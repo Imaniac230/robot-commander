@@ -1,8 +1,9 @@
-from typing import List, Any
+from typing import List, Optional, Dict, Iterator
 from pynput.keyboard import Key, Listener
 import pyaudio
 import wave
 import requests
+import json
 
 
 class Recorder:
@@ -72,12 +73,46 @@ class Recorder:
 
 
 class Requestor:
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str, api_key: Optional[str] = None) -> None:
+        self.key: str = api_key if api_key is not None else "no-key"
         self.url: str = url
 
-    def post(self, prompt: str) -> Any:
-        headers = {"Authorization": "Bearer no-key",
+    def post_chat(self, prompt: str) -> Optional[Dict]:
+        headers = {"Authorization": f"Bearer {self.key}",
                    "Content-Type": "application/json"}
-        payload = [{"role": "user", "content": prompt}]
+        payload = {"model": "gpt-4o", "messages": [{"role": "user", "content": prompt}]}
 
-        return requests.post(self.url + "/v1/chat/completions", data=payload, headers=headers)
+        response = requests.post(self.url + "/v1/chat/completions", json=payload, headers=headers)
+        if not response.ok:
+            print(f"Failed to get response from server (reason: {response.reason}, code: {response.status_code}),"
+                  f" message: {json.loads(response.text)['error']['message']})")
+            return None
+
+        return response.json()
+
+    def post_audio(self, prompt: str, voice: str) -> Optional[Iterator]:
+        headers = {"Authorization": f"Bearer {self.key}",
+                   "Content-Type": "application/json"}
+        payload = {"model": "tts-1", "input": prompt, "voice": voice, "response_format": "wav"}
+
+        response = requests.post(self.url + "/v1/audio/speech", json=payload, headers=headers)
+        if not response.ok:
+            print(f"Failed to get response from server (reason: {response.reason}, code: {response.status_code}),"
+                  f" message: {json.loads(response.text)['error']['message']}")
+            return None
+
+        return response.iter_content()
+
+    def post_translation(self, file: str) -> Optional[Dict]:
+        headers = {"Authorization": f"Bearer {self.key}",
+                   "Content-Type": "multipart/form-data"}
+        payload = {"model": "whisper-1", "file": (file, open(file, mode="rb"), "audio/x-wav")}
+
+        response = requests.post(self.url + "/v1/audio/translations", files=payload, headers=headers)
+        print(f"{response.request.body}")
+        if not response.ok:
+            print(f"Failed to get response from server (reason: {response.reason}, code: {response.status_code},"
+                  f" message: {json.loads(response.text)['error']['message']})")
+            return None
+
+        return response.json()

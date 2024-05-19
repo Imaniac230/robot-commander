@@ -70,7 +70,7 @@ class OpenAI:
         import sounddevice as sd
         import soundfile as sf
 
-        response = openai.audio.speech.create(model=self.speech_model, voice=eval("self.speech_voice"), input=prompt)
+        response = openai.audio.speech.create(model=self.speech_model, voice=eval("self.speech_voice"), input=prompt, response_format="wav")
         response.write_to_file(filename)
         # FIXME(playback): make it inline instead of this crappy file saving
         data, rate = sf.read(filename)
