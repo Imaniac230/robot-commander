@@ -23,7 +23,6 @@ def requesting(key: str) -> None:
         data, rate = sf.read("test.wav")
         sd.play(data, rate, blocking=True)
 
-    #TODO: doesn't work
     print("Posting translation ...")
     result = req.post_translation("test.wav")
     if result is not None: print(f"{result['text']}")

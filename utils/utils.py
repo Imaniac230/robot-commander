@@ -104,11 +104,12 @@ class Requestor:
         return response.iter_content()
 
     def post_translation(self, file: str) -> Optional[Dict]:
-        headers = {"Authorization": f"Bearer {self.key}",
-                   "Content-Type": "multipart/form-data"}
-        payload = {"model": "whisper-1", "file": (file, open(file, mode="rb"), "audio/x-wav")}
+        headers = {"Authorization": f"Bearer {self.key}"}
+        #NOTE: do not specify {"Content-Type": "multipart/form-data"}, must be provided by requests together with the boundary
+        payload = {"file": (file, open(file, mode="rb"), "audio/x-wav")}
+        data = {"model": "whisper-1"}
 
-        response = requests.post(self.url + "/v1/audio/translations", files=payload, headers=headers)
+        response = requests.post(self.url + "/v1/audio/translations", files=payload, data=data, headers=headers)
         print(f"{response.request.body}")
         if not response.ok:
             print(f"Failed to get response from server (reason: {response.reason}, code: {response.status_code},"
