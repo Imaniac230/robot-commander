@@ -15,12 +15,12 @@ def requesting(key: str) -> None:
 
     # oai works
     print("\nPosting chat ...")
-    result = req.respond(prompt)
+    result = req.respond("/v1/chat/completions", prompt)
     if result is not None: print(f"{result['choices'][0]['message']['content']}")
 
     # oai works
     print("\nPosting audio ...")
-    result = req.synthesize(prompt, "fable")
+    result = req.synthesize("/v1/audio/speech", dict(prompt=prompt, voice="fable"))
     if result is not None:
         with open("test.wav", mode="wb") as f:
             for data in result: f.write(data)
@@ -29,7 +29,7 @@ def requesting(key: str) -> None:
 
     # oai works.
     print("\nPosting translation ...")
-    result = req.transcribe("test.wav")
+    result = req.transcribe("/v1/audio/translations", "test.wav")
     if result is not None: print(f"{result['text']}")
 
 
