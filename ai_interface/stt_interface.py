@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from typing_extensions import Self
 from typing import List, Optional
 
+from utils import Requestor
+
 import subprocess as sp
 import threading as th
 import os
@@ -86,10 +88,8 @@ class WhisperCPP(STT):
             self.last_transcription = ''.join([line.split('] ')[1].strip() for line in stripped_raw])
         else:
             if self.server_worker.is_alive():
-                # TODO(server): implement a generalized OAI translate or transcribe interface to query a server,
-                # that would be called from here
-                # also check if the server is avialable at this point?
-                raise NotImplementedError("implement query to server!'")
+                #TODO(whisper_cpp): server endpoint is not fully oai compatible
+                Requestor("http://" + self.params.server_hostname + ':' + str(self.params.server_port)).transcribe("/inference", audio_file)
 
         if int(os.getenv("DEBUG", "0")) >= 1:
             print(f"\nreturned stt transcription:\n{self.last_transcription}\n")
