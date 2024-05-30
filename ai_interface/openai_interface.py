@@ -33,7 +33,7 @@ class OpenAI:
         self.image_size: str = params.image_size
         self.speech_voice: str = params.speech_voice
 
-    def get_voice_prompt(self, key: Key = Key.f10) -> str:
+    def transcribe(self, key: Key = Key.f10) -> str:
         from utils import Recorder
         # FIXME(recording): make it inline instead of this crappy file saving
         with Recorder() as r:
@@ -41,7 +41,7 @@ class OpenAI:
             r.save_recording(filename="prompt.wav")
         return self.client.audio.translations.create(model=self.voice_model, file=open("prompt.wav", "rb")).text
 
-    def get_messages(self, prompt: str) -> str:
+    def respond(self, prompt: str) -> str:
         messages = [{"role": "system", "content": self.init_prompt},
                     {"role": "user", "content": prompt}]
         response = self.client.chat.completions.create(model=self.chat_model, messages=messages, temperature=0.7)
@@ -62,11 +62,11 @@ class OpenAI:
             r.raw.decode_content = True
             with open(filename, 'wb') as f:
                 shutil.copyfileobj(r.raw, f)
-            print(f"Image '{filename}' downloaded.")
+            print(f"\nImage '{filename}' downloaded.")
         else:
-            print("Image couldn't be retrieved.")
+            print("\nImage couldn't be retrieved.")
 
-    def generate_audio(self, prompt: str, filename: str = "speech.wav") -> Any:
+    def synthesize(self, prompt: str, filename: str = "speech.wav") -> Any:
         import sounddevice as sd
         import soundfile as sf
 

@@ -3,7 +3,6 @@ from typing import Tuple, Dict
 import argparse
 import time
 import roslibpy
-import glob
 import os
 import json
 
@@ -48,11 +47,11 @@ def openai_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str
     while True:
         try:
             print("\nPress and hold 'F10' to record your command ...\n")
-            prompt: str = chat_agent.get_voice_prompt()
+            prompt: str = chat_agent.transcribe()
 
             print("\nResponding ...")
-            response: str = chat_agent.get_messages(prompt)
-            chat_agent.generate_audio(response)
+            response: str = chat_agent.respond(prompt)
+            chat_agent.synthesize(response)
             print("\nDone")
 
             print(f"\nsummary:\n\t"
@@ -60,7 +59,7 @@ def openai_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str
                   f"(chatgpt)\n\t-> '{response}'")
 
             print("\nGenerating commands ...")
-            messages = json.loads(ros_agent.get_messages(prompt))
+            messages = json.loads(ros_agent.respond(prompt))
             print("\nDone")
 
             publisher = roslibpy.Topic(ros_client, args.ros_topic, args.ros_message_type)
