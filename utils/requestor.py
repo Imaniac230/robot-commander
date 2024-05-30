@@ -11,8 +11,10 @@ class Requestor:
     @classmethod
     def validate_response(cls, r: rq.Response) -> Optional[rq.Response]:
         if not r.ok:
-            print(f"Failed to get response from server (reason: {r.reason}, code: {r.status_code}),"
-                  f" message: {json.loads(r.text)['error']['message']})")
+            print(f"Failed to get response from server (reason: {r.reason}, code: {r.status_code}), message:\n{r.text}")
+            return None
+        if r.headers["Content-Type"] == "application/json" and "error" in r.json():
+            print(f"Server failed to process request, message:\n{r.text}")
             return None
         return r
 
@@ -20,7 +22,7 @@ class Requestor:
         #NOTE: do not specify {"Content-Type": "multipart/form-data"}, must be provided by requests together with the boundary
         self.headers.pop("Content-Type", None)
         payload = {"file": (file, open(file, mode="rb"), "audio/x-wav")}
-        data = {"model": "whisper-1"}
+        data = {"model": "whisper-1"} #NOTE: valid only for OpenAI requests
 
         r: Optional[rq.Response] = self.validate_response(rq.post(self.url + endpoint, files=payload, data=data, headers=self.headers))
         return r.json() if r is not None else r
