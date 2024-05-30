@@ -37,7 +37,8 @@ class TTS:
     
     def play_synthesis(self):
         if self.last_generation is not None:
-            sd.play(self.last_generation, SAMPLE_RATE, blocking=True)
+            sd.wait()
+            sd.play(self.last_generation, SAMPLE_RATE, blocking=False)
 
 
 class Bark(TTS):

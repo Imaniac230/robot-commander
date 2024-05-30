@@ -1,1 +1,1 @@
-from .agent import Agent
+from commander.agent import Agent

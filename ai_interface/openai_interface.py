@@ -74,6 +74,7 @@ class OpenAI:
         response.write_to_file(filename)
         # FIXME(playback): make it inline instead of this crappy file saving
         data, rate = sf.read(filename)
-        sd.play(data, rate, blocking=True)
+        sd.wait()
+        sd.play(data, rate, blocking=False)
 
         return response.content
