@@ -18,68 +18,33 @@ def local_model_factory() -> Dict[str, str]:
     return dict(stt=stt, llm=llm, tts=tts, tts_voice=tts_voice)
 
 
-def ros_factory() -> Tuple[roslibpy.Ros, argparse.Namespace]:
+def init_factory() -> Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]]:
+    from utils import ROSPublisher, RobotChat
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('--key', type=str, default=None, help='OpenAI API key.')
-    parser.add_argument('--host', type=str, default='localhost', help='ROS host.')
-    parser.add_argument('--port', type=int, default='9090', help='ROS port.')
-    parser.add_argument('--topic', type=str, required=True, help='Topic for commanding the robot.')
-    parser.add_argument('--type', type=str, required=True, help='Message type for the topic.')
+    parser.add_argument('--net_interface', type=str, default='lo', help='Network interface for servers.')
+    parser.add_argument('--api_key', type=str, default=None, help='OpenAI API key.')
+    parser.add_argument('--ros_host', type=str, default='localhost', help='ROS host.')
+    parser.add_argument('--ros_port', type=int, default='9090', help='ROS port.')
+    parser.add_argument('--ros_topic', type=str, required=True, help='Topic for commanding the robot.')
+    parser.add_argument('--ros_message_type', type=str, required=True, help='Message type for the topic.')
+    parser.add_argument('--robot_name', type=str, required=True, help='Name of the robot that will be used for the system prompt.')
     args: argparse.Namespace = parser.parse_args()
 
-    ros = roslibpy.Ros(host=args.host, port=args.port)
+    ros = roslibpy.Ros(host=args.ros_host, port=args.ros_port)
     ros.run()
 
-    return ros, args
+    return args, ros, dict(chat=RobotChat('robot-chat.txt', name=args.robot_name).prompt(), ros=ROSPublisher('ros-publisher.txt').prompt())
 
 
-# TODO(prompt-factory): create a class for this
-def prompt_factory() -> Dict[str, str]:
-    context = ['keyword: window -> frame_id: map, position: {x: 1.0, y: 1.0, z: 0.0}, orientation: {w: 1.0}']
-    context += ['keyword: door -> frame_id: map, position: {x: 10.0, y: -5.0, z: 0.0}, orientation: {w: 0.5}']
-    context += ['keyword: Tomas -> frame_id: map, position: {x: -12.0, y: 10.0, z: 0.0}, orientation: {w: 1.0}']
-    context += ['keyword: Milos -> frame_id: map, position: {x: -1.0, y: -4.0.0, z: 0.0}, orientation: {w: 1.0}']
-    context += ['keyword: Petr -> frame_id: map, position: {x: 15.0.0, y: 2.0, z: 0.0}, orientation: {w: 1.0}']
-    context += ['keyword: Tomas window -> frame_id: map, position: {x: 11.5, y: -4.2, z: 0.0}, orientation: {w: 0.5}']
-    context += ['keyword: origin -> frame_id: map, position: {x: 0.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}']
-
-    messages = ""
-    for file in glob.glob("messages/*.txt"):
-        messages += "<" + os.path.basename(file).split('.')[0] + ">"
-        with open(file, 'r') as rd:
-            messages += rd.read()
-        messages += "</" + os.path.basename(file).split('.')[0] + ">" + "\n"
-
-    ctx = ""
-    for item in context:
-        ctx += item + "\n"
-
-    if int(os.getenv("DEBUG", "0")) >= 1:
-        if ctx is not None:
-            print(f"context:\n{ctx}")
-        print(f"messages:\n{messages}")
-
-    with open("prompts/ros-publisher.txt") as f: ros_agent_prompt = f.read()
-    ros_agent_prompt += 'Details about the ROS2 messages that you will output:\n'
-    ros_agent_prompt += f'The following shows the ROS2 messages in the required JSON format:\n{messages}\n'
-    ros_agent_prompt += 'Each message is enclosed inside a tag that defines its ROS2 name (<message-name></message-name>).\n\n'
-    if ctx is not None:
-        ros_agent_prompt += 'Additional properties of the environment that you are operating in:\n'
-        ros_agent_prompt += f'The following lines provide context for mapping any received keywords to corresponding properties of the JSON response:\n{ctx}\n'
-        ros_agent_prompt += 'Make sure you always match all JSON property values exactly each time you detect a corresponding keyword.\n\n'
-
-    with open("prompts/robot-chat.txt") as f: chat_agent_prompt = f.read()
-
-    return dict(chat=chat_agent_prompt, ros=ros_agent_prompt)
-
-
-def openai_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_init: Dict[str, str]) -> None:
+def openai_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]]) -> None:
     from ai_interface import OpenAI, OpenAIParams
 
-    ros_client: roslibpy.Ros = system_init[0]
-    args: argparse.Namespace = system_init[1]
-    ros_agent = OpenAI(OpenAIParams(api_key=args.key, chat_initial_prompt=prompt_init["ros"]))
-    chat_agent = OpenAI(OpenAIParams(api_key=args.key, chat_initial_prompt=prompt_init["chat"]))
+    args: argparse.Namespace = system_init[0]
+    ros_client: roslibpy.Ros = system_init[1]
+    prompt_init: Dict[str, str] = system_init[2]
+    ros_agent = OpenAI(OpenAIParams(api_key=args.api_key, chat_initial_prompt=prompt_init["ros"]))
+    chat_agent = OpenAI(OpenAIParams(api_key=args.api_key, chat_initial_prompt=prompt_init["chat"]))
     while True:
         try:
             print("\nPress and hold 'F10' to record your command ...\n")
@@ -98,7 +63,7 @@ def openai_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_
             messages = json.loads(ros_agent.get_messages(prompt))
             print("\nDone")
 
-            publisher = roslibpy.Topic(ros_client, args.topic, args.type)
+            publisher = roslibpy.Topic(ros_client, args.ros_topic, args.ros_message_type)
             if ros_client.is_connected:
                 for message in messages:
                     publisher.publish(roslibpy.Message(message))
@@ -113,23 +78,24 @@ def openai_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_
     ros_client.terminate()
 
 
-def local_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_init: Dict[str, str], model_init: Dict[str, str]) -> None:
+def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]], model_init: Dict[str, str]) -> None:
     from utils import Recorder
     from ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, Bark, TTSParams
     from pynput.keyboard import Key
     from commander import Agent
 
-    import socket
+    import netifaces as ni
 
-    ros_client: roslibpy.Ros = system_init[0]
-    args: argparse.Namespace = system_init[1]
+    args: argparse.Namespace = system_init[0]
+    ros_client: roslibpy.Ros = system_init[1]
+    prompt_init: Dict[str, str] = system_init[2]
     input_recording: str = "input_recording.wav"
 
     ros_agent = Agent(
         WhisperCPP(STTParams(
             model_path=model_init["stt"],
             initial_prompt="",
-            server_hostname=socket.gethostbyname(socket.gethostname()),
+            server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
             server_port=8080
         )),
         LlamaCPP(LLMParams(
@@ -138,7 +104,7 @@ def local_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_i
             n_of_tokens_to_predict=-1,  # gauge this reasonably
             n_of_gpu_layers_to_offload=43,
             grammar_file_path=str(os.path.realpath(__file__).rstrip(os.path.basename(__file__))) + 'grammars/posestamped.gbnf',
-            server_hostname=socket.gethostbyname(socket.gethostname()),
+            server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
             server_port=8081,
             n_of_parallel_server_requests=1
         ))
@@ -148,7 +114,7 @@ def local_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_i
         WhisperCPP(STTParams(
             model_path=model_init["stt"],
             initial_prompt="",
-            server_hostname=socket.gethostbyname(socket.gethostname()),
+            server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
             server_port=8082
         )),
         LlamaCPP(LLMParams(
@@ -156,7 +122,7 @@ def local_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_i
             initial_prompt=prompt_init["chat"],
             n_of_tokens_to_predict=-1,  # gauge this reasonably
             n_of_gpu_layers_to_offload=43,
-            server_hostname=socket.gethostbyname(socket.gethostname()),
+            server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
             server_port=8083,
             n_of_parallel_server_requests=1
         )),
@@ -207,5 +173,5 @@ def local_example(system_init: Tuple[roslibpy.Ros, argparse.Namespace], prompt_i
 
 
 if __name__ == '__main__':
-    openai_example(ros_factory(), prompt_factory())
-    # local_example(ros_factory(), prompt_factory(), local_model_factory())
+    openai_example(init_factory())
+    # local_example(init_factory(), local_model_factory())
