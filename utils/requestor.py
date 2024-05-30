@@ -17,6 +17,7 @@ class Requestor:
 
     def transcribe(self, file: str) -> Optional[Dict]:
         #NOTE: do not specify {"Content-Type": "multipart/form-data"}, must be provided by requests together with the boundary
+        self.headers.pop("Content-Type", None)
         payload = {"file": (file, open(file, mode="rb"), "audio/x-wav")}
         data = {"model": "whisper-1"}
 
