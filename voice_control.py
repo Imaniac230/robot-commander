@@ -10,7 +10,7 @@ import json
 def local_model_factory() -> Dict[str, str]:
     # models: str = "/run/user/1000/gvfs/smb-share:server=starlink-nas.local,share=data%20nas/models"
     models: str = "/media/user/data_ssd/models"
-    llm: str = models + "/llama3/Meta-Llama-3-8B/ggml-model-q4_0-fromhf-origtokenizer-with-convert-hf.gguf"
+    llm: str = models + "/llama2/llama-2-13b-chat/ggml-model-q4_0.gguf"
     stt: str = models + "/whisper/large/ggml-model-q4_0-large-v3.bin"
     tts: str = models + "/bark/"
     tts_voice: str = "announcer"
@@ -27,13 +27,12 @@ def init_factory() -> Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]]:
     parser.add_argument('--ros_port', type=int, default='9090', help='ROS port.')
     parser.add_argument('--ros_topic', type=str, required=True, help='Topic for commanding the robot.')
     parser.add_argument('--ros_message_type', type=str, required=True, help='Message type for the topic.')
-    parser.add_argument('--robot_name', type=str, required=True, help='Name of the robot that will be used for the system prompt.')
     args: argparse.Namespace = parser.parse_args()
 
     ros = roslibpy.Ros(host=args.ros_host, port=args.ros_port)
     ros.run()
 
-    return args, ros, dict(chat=RobotChat('robot-chat.txt', name=args.robot_name).prompt(), ros=ROSPublisher('ros-publisher.txt').prompt())
+    return args, ros, dict(chat=RobotChat('robot-chat.txt').prompt(), ros=ROSPublisher('ros-publisher.txt').prompt())
 
 
 def openai_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]]) -> None:
@@ -100,9 +99,9 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
         LlamaCPP(LLMParams(
             model_path=model_init["llm"],
             initial_prompt=prompt_init["ros"],
-            n_of_tokens_to_predict=-1,  # gauge this reasonably
-            n_of_gpu_layers_to_offload=43,
-            grammar_file_path=str(os.path.realpath(__file__).rstrip(os.path.basename(__file__))) + 'grammars/posestamped.gbnf',
+            n_of_tokens_to_predict=500,  # gauge this reasonably
+            n_of_gpu_layers_to_offload=20,
+            json_schema_file_path=str(os.path.realpath(__file__).rstrip(os.path.basename(__file__))) + 'grammars/posestamped.json',
             server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
             server_port=8081,
             n_of_parallel_server_requests=1
@@ -119,8 +118,8 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
         LlamaCPP(LLMParams(
             model_path=model_init["llm"],
             initial_prompt=prompt_init["chat"],
-            n_of_tokens_to_predict=-1,  # gauge this reasonably
-            n_of_gpu_layers_to_offload=43,
+            n_of_tokens_to_predict=100,  # gauge this reasonably
+            n_of_gpu_layers_to_offload=20,
             server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
             server_port=8083,
             n_of_parallel_server_requests=1
@@ -153,10 +152,10 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
 
             print("\nGenerating commands ...")
             # messages = json.loads(ros_agent.llm.respond(ros_agent.stt.transcribe(input_recording, load_model=True), load_model=True))["commands"]
-            messages = json.loads(ros_agent.respond(input_recording))["commands"]
+            messages = json.loads(ros_agent.respond(input_recording))
             print("\nDone")
 
-            publisher = roslibpy.Topic(ros_client, args.topic, args.type)
+            publisher = roslibpy.Topic(ros_client, args.ros_topic, args.ros_message_type)
             if ros_client.is_connected:
                 for message in messages:
                     publisher.publish(roslibpy.Message(message))
@@ -172,5 +171,5 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
 
 
 if __name__ == '__main__':
-    openai_example(init_factory())
-    # local_example(init_factory(), local_model_factory())
+    # openai_example(init_factory())
+    local_example(init_factory(), local_model_factory())

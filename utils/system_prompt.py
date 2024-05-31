@@ -6,19 +6,18 @@ import os
 class SystemPrompt:
     def __init__(self, file_path: str) -> None:
         # FIXME(file-path): make this a parsable path-like
-        with open(f"prompts/{file_path}") as f: self._prompt = f.read()
+        with open(f"prompts/{file_path}", 'r') as f: self._prompt = f.read()
 
     def prompt(self) -> str: return self._prompt
 
 
 class RobotChat(SystemPrompt):
-    def __init__(self, file_path: str, name: str, personality: Optional[str] = None) -> None:
+    def __init__(self, file_path: str, personality: Optional[str] = None) -> None:
         super().__init__(file_path)
-        self._prompt = self._prompt.replace('<ROBOT_NAME>', name)
         if personality is not None:
             if int(os.getenv("DEBUG", "0")) >= 1: print(f"personality:\n{personality}")
 
-            self._prompt += f"Finally, here is more info on your personality and character traits:\n{personality}\n"
+            self._prompt += f"Here is some more info on your personality and character traits:\n{personality}\n"
 
         if int(os.getenv("DEBUG", "0")) >= 2: print(f"full system prompt:\n{self._prompt}")
 
@@ -28,10 +27,10 @@ class ROSPublisher(SystemPrompt):
     def __init__(self, file_path: str, environment: Optional[str] = None) -> None:
         super().__init__(file_path)
         messages = ""
-        for file in glob.glob("messages/*.txt"):
-            messages += "<" + os.path.basename(file).split('.')[0] + ">"
+        for file in glob.glob("messages/*.json"):
+            messages += "<" + os.path.basename(file).split('.')[0] + ">\n"
             with open(file, 'r') as rd: messages += rd.read()
-            messages += "</" + os.path.basename(file).split('.')[0] + ">" + "\n"
+            messages += "\n</" + os.path.basename(file).split('.')[0] + ">\n"
 
         contexts = ""
         for file in glob.glob("messages/contexts/*.txt"):

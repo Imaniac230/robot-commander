@@ -1,10 +1,13 @@
 from dataclasses import dataclass
 from typing_extensions import Self
-from typing import List, Optional
+from typing import List, Optional,Dict
+
+from utils import Requestor
 
 import subprocess as sp
 import threading as th
 import os
+import json
 
 
 @dataclass
@@ -14,6 +17,7 @@ class LLMParams:
     n_of_tokens_to_predict: int
     temperature: Optional[float] = None
     n_of_gpu_layers_to_offload: Optional[int] = None
+    json_schema_file_path: Optional[str] = None
     grammar_file_path: Optional[str] = None
     server_hostname: Optional[str] = None
     server_port: Optional[int] = None
@@ -69,12 +73,23 @@ class LlamaCPP(LLM):
             # implicit params
             # publish server metrics
             args += ["--metrics"]
+            # initial prompt must be specified in a file
+            #TODO(system-prompt): server readme specifies a json formatted file for the system prompt,
+            #   but the code seems to just pass the raw text contents as is without any json parsing
+            # tmp = "/tmp/system_prompt.json"
+            # with open(tmp, "w") as f: f.write(json.dumps({"system_prompt": {"prompt": self.params.initial_prompt, "anti_prompt": "Human:", "assistant_name": "Loki:"}}))
+            #TODO(system-prompt): decide how to approach this:
+            #   each request in chat-completion "system" role? -> usable only with instruction fine tuned models with chat templates?
+            #   this system_prompt? -> gets tokenized directly at the start without the special tokens? - only usable with with foundation models?
+            from random import randint
+            tmp = "/tmp/system_prompt_" + str(randint(0, 1000)) + ".txt"
+            with open(tmp, "w") as f: f.write(self.params.initial_prompt)
+            args += ["--system-prompt-file", tmp]
             # configurable params (optional, default by llama.cpp implementation)
             if self.params.n_of_parallel_server_requests is not None: args += ["--parallel", str(self.params.n_of_parallel_server_requests)]
             if self.params.server_hostname is not None: args += ["--host", self.params.server_hostname]
             if self.params.server_port is not None: args += ["--port", str(self.params.server_port)]
-            # [grammar, temperature] are specified in each server request
-            # initial prompt is specified in a json config to server at launch
+            # [grammar, temperature, n_keep] are specified in each server request
         elif command == "main":
             # implicit params
             # don't output the prompt
@@ -83,6 +98,7 @@ class LlamaCPP(LLM):
             args += ["--keep", str(len(self.params.initial_prompt)), "--prompt", "\"" + prompt + "\""]
             # configurable params (optional, default by llama.cpp implementation)
             if self.params.temperature is not None: args += ["--temp", str(self.params.temperature)]
+            #TODO: check if main params also specify the schema param
             if self.params.grammar_file_path is not None: args += ["--grammar-file", self.params.grammar_file_path]
         else:
             raise NotImplementedError(f"command '{command}' is not supported")
@@ -99,10 +115,15 @@ class LlamaCPP(LLM):
                 print(f"\nllm command full output:\n{self.last_response}\n")
         else:
             if self.server_worker.is_alive():
-                # TODO(server): implement a generalized OAI chat-completion interface to query a server,
-                # that would be called from here
-                # also check if the server is avialable at this point?
-                raise NotImplementedError("implement query to server!'")
+                payload = {"messages": [{"role": "user", "content": "REQUEST:\n" + prompt}], "stop": ["REQUEST:"]}
+                #TODO(grammar): decide if we will handle both grammar and schema options
+                if self.params.json_schema_file_path is not None:
+                    with open(self.params.json_schema_file_path) as sch: schema = json.load(sch)
+                    payload["response_format"] = {"type": "json_object", "schema": schema}
+
+                r: Optional[Dict] = Requestor("http://" + self.params.server_hostname + ':' + str(self.params.server_port)).respond("/v1/chat/completions", payload)
+                if r is not None:
+                    self.last_response = r["choices"][0]["message"]["content"]
 
         if int(os.getenv("DEBUG", "0")) >= 1:
             print(f"\ngiven prompt:\n{full_prompt}\n")

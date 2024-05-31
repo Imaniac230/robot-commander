@@ -1,4 +1,83 @@
-origin -> {header: {stamp: {sec: 0, nanosec: 0}, frame_id: map}, pose: {position: {x: 0.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}
-door -> {header: {stamp: {sec: 0, nanosec: 0}, frame_id: map}, pose: {position: {x: 1.0, y: -1.0, z: 0.0}, orientation: {w: 0.5}}}
-window -> {header: {stamp: {sec: 0, nanosec: 0}, frame_id: map}, pose: {position: {x: -5.2, y: 2.5, z: 0.0}, orientation: {w: 0.0}}}
-box -> {header: {stamp: {sec: 0, nanosec: 0}, frame_id: map}, pose: {position: {x: 10.0, y: 5.0, z: 0.0}, orientation: {w: 1.0}}}
+origin:
+{
+  "header": {
+    "stamp": {
+      "sec": 0,
+      "nanosec": 0
+    },
+    "frame_id": "map"
+  },
+  "pose": {
+    "position": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "orientation": {
+      "w": 0.0
+    }
+  }
+}
+
+door:
+{
+  "header": {
+    "stamp": {
+      "sec": 0,
+      "nanosec": 0
+    },
+    "frame_id": "map"
+  },
+  "pose": {
+    "position": {
+      "x": 1.0,
+      "y": -1.0,
+      "z": 0.0
+    },
+    "orientation": {
+      "w": 0.5
+    }
+  }
+}
+
+window:
+{
+  "header": {
+    "stamp": {
+      "sec": 0,
+      "nanosec": 0
+    },
+    "frame_id": "map"
+  },
+  "pose": {
+    "position": {
+      "x": -5.2,
+      "y": 2.5,
+      "z": 0.0
+    },
+    "orientation": {
+      "w": 0.0
+    }
+  }
+}
+
+box:
+{
+  "header": {
+    "stamp": {
+      "sec": 0,
+      "nanosec": 0
+    },
+    "frame_id": "map"
+  },
+  "pose": {
+    "position": {
+      "x": 10.0,
+      "y": 5.0,
+      "z": 0.0
+    },
+    "orientation": {
+      "w": 1.0
+    }
+  }
+}

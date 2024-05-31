@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing_extensions import Self
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from utils import Requestor
 
@@ -88,8 +88,11 @@ class WhisperCPP(STT):
             self.last_transcription = ''.join([line.split('] ')[1].strip() for line in stripped_raw])
         else:
             if self.server_worker.is_alive():
-                #TODO(whisper_cpp): server endpoint is not fully oai compatible
-                Requestor("http://" + self.params.server_hostname + ':' + str(self.params.server_port)).transcribe("/inference", audio_file)
+                payload = {"file": (audio_file, open(audio_file, mode="rb"), "audio/x-wav")}
+                #TODO(whisper_cpp): server does not have an oai compatible endpoint name
+                r: Optional[Dict] = Requestor("http://" + self.params.server_hostname + ':' + str(self.params.server_port)).transcribe("/inference", payload)
+                if r is not None:
+                    self.last_transcription = r["text"]
 
         if int(os.getenv("DEBUG", "0")) >= 1:
             print(f"\nreturned stt transcription:\n{self.last_transcription}\n")
