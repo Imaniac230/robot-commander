@@ -40,6 +40,7 @@ class Recorder:
         def on_press(current_key: Key):
             if not self.recording and current_key == key:
                 self.recording = True
+                stream = self.port.open(format=self.format, channels=self.channels, rate=self.rate, frames_per_buffer=self.chunk, input=True)
                 while self.recording:
                     self.frames.append(stream.read(self.chunk))
                 stream.stop_stream()
@@ -52,9 +53,6 @@ class Recorder:
                 return False
 
         self.frames = []
-        stream = self.port.open(format=self.format, channels=self.channels, rate=self.rate,
-                                frames_per_buffer=self.chunk,
-                                input=True)
         with Listener(on_release=on_release) as release_listener:
             with Listener(on_press=on_press) as press_listener:
                 press_listener.join()
