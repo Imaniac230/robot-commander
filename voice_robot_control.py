@@ -77,6 +77,9 @@ def openai_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str
             publisher = roslibpy.Topic(ros_client, args.ros_topic, args.ros_message_type)
             if ros_client.is_connected:
                 for message in messages:
+                    stamp = roslibpy.Time.now()
+                    message["header"]["stamp"]["sec"] = stamp.secs
+                    message["header"]["stamp"]["nanosec"] = stamp.nsecs
                     publisher.publish(roslibpy.Message(message))
                     print(f'Publishing message: "{message}"')
                     time.sleep(1)
@@ -183,6 +186,9 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
             publisher = roslibpy.Topic(ros_client, args.ros_topic, args.ros_message_type)
             if ros_client.is_connected:
                 for message in messages:
+                    stamp = roslibpy.Time.now()
+                    message["header"]["stamp"]["sec"] = stamp.secs
+                    message["header"]["stamp"]["nanosec"] = stamp.nsecs
                     publisher.publish(roslibpy.Message(message))
                     print(f"Publishing message: '{message}'")
                     time.sleep(1)
