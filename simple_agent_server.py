@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     local_address: str = ni.ifaddresses(args.interface)[ni.AF_INET][0]['addr']
     models: str = "/media/user/data_ssd/models"
-    llm: str = models + "/llama2/original/llama-2-13b-chat/ggml-model-q4_0.gguf"
+    llm: str = models + "/llama3/hf/Meta-Llama-3-8B-Instruct/ggml-model-q4_0.gguf"
     stt: str = models + "/whisper/large/ggml-model-q4_0-large-v3.bin"
 
     Agent(
