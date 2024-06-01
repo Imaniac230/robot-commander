@@ -10,7 +10,7 @@ import json
 def local_model_factory() -> Dict[str, str]:
     # models: str = "/run/user/1000/gvfs/smb-share:server=starlink-nas.local,share=data%20nas/models"
     models: str = "/media/user/data_ssd/models"
-    llm: str = models + "/llama2/llama-2-13b-chat/ggml-model-q4_0.gguf"
+    llm: str = models + "/llama2/original/llama-2-13b-chat/ggml-model-q4_0.gguf"
     stt: str = models + "/whisper/large/ggml-model-q4_0-large-v3.bin"
     tts: str = models + "/bark/"
     tts_voice: str = "announcer"
@@ -22,9 +22,9 @@ def init_factory() -> Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]]:
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--net_interface', type=str, default='lo', help='Network interface for servers.')
-    parser.add_argument('--api_key', type=str, default=None, help='OpenAI API key.')
-    parser.add_argument('--ros_host', type=str, default='localhost', help='ROS host.')
-    parser.add_argument('--ros_port', type=int, default='9090', help='ROS port.')
+    parser.add_argument('--api_key', type=str, default=None, help='OpenAI or custom (if used for local models) API key.')
+    parser.add_argument('--ros_host', type=str, default='localhost', help='ROS bridge host.')
+    parser.add_argument('--ros_port', type=int, default='9090', help='ROS bridge port.')
     parser.add_argument('--ros_topic', type=str, required=True, help='Topic for commanding the robot.')
     parser.add_argument('--ros_message_type', type=str, required=True, help='Message type for the topic.')
     args: argparse.Namespace = parser.parse_args()
@@ -81,7 +81,6 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
     from ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, Bark, TTSParams
     from pynput.keyboard import Key
     from commander import Agent
-
     import netifaces as ni
 
     args: argparse.Namespace = system_init[0]
@@ -89,6 +88,9 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
     prompt_init: Dict[str, str] = system_init[2]
     input_recording: str = "input_recording.wav"
 
+    #TODO(efficient-agents): We wouldn't need two separate tts instances here, as they are identical,
+    #   but the current design doesn't support any cross-sharing between independent agents.
+    #   If the requests are made from an external requestor (which should be the target case), then one of them could be omitted.
     ros_agent = Agent(
         WhisperCPP(STTParams(
             model_path=model_init["stt"],
@@ -99,7 +101,7 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
         LlamaCPP(LLMParams(
             model_path=model_init["llm"],
             initial_prompt=prompt_init["ros"],
-            n_of_tokens_to_predict=500,  # gauge this reasonably
+            n_of_tokens_to_predict=500,
             n_of_gpu_layers_to_offload=20,
             json_schema_file_path=str(os.path.realpath(__file__).rstrip(os.path.basename(__file__))) + 'grammars/posestamped.json',
             server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
@@ -118,12 +120,13 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
         LlamaCPP(LLMParams(
             model_path=model_init["llm"],
             initial_prompt=prompt_init["chat"],
-            n_of_tokens_to_predict=100,  # gauge this reasonably
+            n_of_tokens_to_predict=100,
             n_of_gpu_layers_to_offload=20,
             server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
             server_port=8083,
             n_of_parallel_server_requests=1
         )),
+        #TODO(tts-server): import server for tts once it is reasonably available
         Bark(TTSParams(
             model_path=model_init["tts"],
             voice=model_init["tts_voice"]
@@ -139,10 +142,7 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
             print(f"\nDone, created file: {input_recording}")
 
             print("\nResponding ...")
-            # chat_agent.tts.synthesize(chat_agent.llm.respond(chat_agent.stt.transcribe(input_recording, load_model=True), inline_response=True, load_model=True))
-            # print(f"\nPlaying back the response ...")
-            # chat_agent.tts.play_synthesis()
-            chat_agent.respond(input_recording)
+            chat_agent.respond(input_recording, load_models=False, playback_response=True)
             print("\nDone")
 
             print(f"\nsummary:\n\t{input_recording} -> "
@@ -151,8 +151,7 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
                   f"(bark)\n\t-> {chat_agent.tts.generated_file}")
 
             print("\nGenerating commands ...")
-            # messages = json.loads(ros_agent.llm.respond(ros_agent.stt.transcribe(input_recording, load_model=True), load_model=True))["commands"]
-            messages = json.loads(ros_agent.respond(input_recording))
+            messages = json.loads(ros_agent.respond(input_recording, load_models=False))
             print("\nDone")
 
             publisher = roslibpy.Topic(ros_client, args.ros_topic, args.ros_message_type)

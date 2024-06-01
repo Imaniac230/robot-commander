@@ -52,7 +52,9 @@ class Bark(TTS):
 
         return self.last_generation
 
-    def synthesize(self, prompt: str) -> Any:
+    def synthesize(self, prompt: str, load_model: bool = True) -> Any:
+        if not load_model: print("Server for pytorch Bark is not supported, loading model.")
+
         processed_prompt = nltk.sent_tokenize(prompt.replace('\n', ' ').strip())
         silence = np.zeros(int(0.25 * SAMPLE_RATE))
 
@@ -77,5 +79,5 @@ class BarkCPP(TTS):
     def __init__(self, params: TTSParams) -> None:
         super().__init__(params)
 
-    def synthesize(self, prompt: str) -> Any:
-        raise NotImplementedError("implement bark_cpp")
+    def synthesize(self, prompt: str, load_model: bool = False) -> Any:
+        raise NotImplementedError("Support for bark_cpp is not yet implemented!")
