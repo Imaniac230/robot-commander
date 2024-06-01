@@ -1,37 +1,12 @@
 from utils import Requestor, Recorder
-from commander import Agent
-from ai_interface import WhisperCPP, STTParams, LlamaCPP, LLMParams
 from pynput.keyboard import Key
 import sounddevice as sd
 import soundfile as sf
-import netifaces as ni
 import argparse
 import json
 
 
 def general_requesting(use_local: bool) -> None:
-    if use_local:
-        models: str = "/media/user/data_ssd/models"
-        llm: str = models + "/llama2/original/llama-2-13b-chat/ggml-model-q4_0.gguf"
-        stt: str = models + "/whisper/large/ggml-model-q4_0-large-v3.bin"
-        a = Agent(
-            WhisperCPP(STTParams(
-                model_path=stt,
-                initial_prompt="",
-                server_hostname=local_address,
-                server_port=8080
-            )),
-            LlamaCPP(LLMParams(
-                model_path=llm,
-                initial_prompt="You are a helpful assistant that always gives precise and relevant answers.",
-                n_of_tokens_to_predict=500,
-                n_of_gpu_layers_to_offload=43,
-                server_hostname=local_address,
-                server_port=8081,
-                n_of_parallel_server_requests=1
-            ))
-        ).launch()
-
     recording = "test.wav"
     print("\nPress and hold 'F10' to record your command ...\n")
     with Recorder(frequency_hz=16000) as r:
@@ -98,11 +73,11 @@ def local_chat(prompt: str) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--key', type=str, default=None, help='OpenAI API key.')
-    parser.add_argument('--interface', type=str, default='lo', help='Network interface for servers.')
+    parser.add_argument('--local_address', type=str, default='127.0.0.1', help='Address for local server requests.')
     args: argparse.Namespace = parser.parse_args()
 
-    local_address: str = ni.ifaddresses(args.interface)[ni.AF_INET][0]['addr']
     key: str = args.key
+    local_address: str = args.local_address
 
     general_requesting(use_local=True)
     p = "I want you to get your ass to the box."
