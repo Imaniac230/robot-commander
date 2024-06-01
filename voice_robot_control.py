@@ -47,7 +47,13 @@ def openai_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str
         try:
             print("\nPress and hold 'F10' to record your command ...\n")
             prompt: str = chat_agent.transcribe()
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print(f"Failed to record the prompt, error: {e}")
+            continue
 
+        try:
             print("\nResponding ...")
             response: str = chat_agent.respond(prompt)
             chat_agent.synthesize(response)
@@ -56,7 +62,14 @@ def openai_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str
             print(f"\nsummary:\n\t"
                   f"(whisper)\n\t-> '{prompt}' -> "
                   f"(chatgpt)\n\t-> '{response}'")
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print(f"Failed to complete chat agent tasks: {e}")
+            print("Continuing to the ROS agent")
+            pass
 
+        try:
             print("\nGenerating commands ...")
             messages = json.loads(ros_agent.respond(prompt))
             print("\nDone")
@@ -70,7 +83,7 @@ def openai_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str
         except KeyboardInterrupt:
             break
         except Exception as e:
-            print(f"Failed to perform all tasks, error: {e}")
+            print(f"Failed to complete ROS agent tasks, error: {e}")
             continue
 
     ros_client.terminate()
@@ -140,7 +153,13 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
                 r.hold_to_record(Key.f10)
                 r.save_recording(input_recording)
             print(f"\nDone, created file: {input_recording}")
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print(f"Failed to record the prompt, error: {e}")
+            continue
 
+        try:
             print("\nResponding ...")
             chat_agent.respond(input_recording, load_models=False, playback_response=True)
             print("\nDone")
@@ -149,7 +168,14 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
                   f"(whisper)\n\t-> '{chat_agent.stt.last_transcription}' -> "
                   f"(llama)\n\t-> '{chat_agent.llm.last_response}' -> "
                   f"(bark)\n\t-> {chat_agent.tts.generated_file}")
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print(f"Failed to complete chat agent tasks: {e}")
+            print("Continuing to the ROS agent")
+            pass
 
+        try:
             print("\nGenerating commands ...")
             messages = json.loads(ros_agent.respond(input_recording, load_models=False))
             print("\nDone")
@@ -163,7 +189,7 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
         except KeyboardInterrupt:
             break
         except Exception as e:
-            print(f"Failed to perform all tasks, error: {e}")
+            print(f"Failed to complete ROS agent tasks, error: {e}")
             continue
 
     ros_client.terminate()
