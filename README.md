@@ -1,7 +1,12 @@
-# robot-voice-command
+# Robot Commander
+
+>TODO: Update outdated README:
+> * add steps for preparing all dependency libraries (llama_cpp, whisper_cpp, bark)
+> * add notes for downloading and preparing local models
+> * add examples for using the local interfaces in addition to the openai API
 
 ## Requirements
-To be able to access the openai API you must have an account at [OpenAI](https://openai.com) with a valid payment method set 💩.
+To be able to access the openai API you must have an account at [OpenAI](https://openai.com) with a valid payment method set.
 
 ## Support
 The `geometry_msgs/PoseStamped` and `geometry_msgs/Twist` message types should work most of the time.
