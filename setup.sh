@@ -6,20 +6,32 @@ function scriptRootDir() {
   echo "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 }
 
+useCuda=""
+while [[ $useCuda != "OFF" ]] && [[ $useCuda != "ON" ]]; do
+  read -rp "Attempt to build llama.cpp and whisper.cpp with CUDA support? [y/n] " useCuda
+  useCuda=$(echo "$useCuda" | tr '[:upper:]' '[:lower:]')
+  if [[ $useCuda == "n" ]] || [[ $useCuda == "no" ]]; then
+    useCuda="OFF"
+  elif [[ $useCuda == "y" ]] || [[ $useCuda == "yes" ]]; then
+    useCuda="ON"
+  fi
+done
+
 buildDirectory="build"
 
 llamaCppPath="$(scriptRootDir)/libs/llama_cpp"
-llamaCppOptions="-DLLAMA_CUDA=ON -DLLAMA_CUDA_F16=ON -DLLAMA_NATIVE=ON -DLLAMA_AVX512=OFF"
+llamaCppOptions="-DLLAMA_CUDA=$useCuda -DLLAMA_CUDA_F16=$useCuda -DLLAMA_NATIVE=ON -DLLAMA_AVX512=OFF"
 
 whisperCppPath="$(scriptRootDir)/libs/whisper_cpp"
-whisperCppOptions="-DWHISPER_CUDA=ON -DWHISPER_NO_AVX512=ON"
+whisperCppOptions="-DWHISPER_CUDA=$useCuda -DWHISPER_NO_AVX512=ON"
 
 cudaOptions="-DCMAKE_CUDA_ARCHITECTURES=native -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc"
 
 barkPath="$(scriptRootDir)/libs/bark"
 
-vcs import ./ < libraries.repos
 
+echo -e "\nDownloading external libraries ...\n\n"
+vcs import ./ < libraries.repos
 
 echo -e "\nBuilding llama.cpp ...\n\n"
 pushd "$llamaCppPath" || { echo "ERROR: Could not push into the '$llamaCppPath' directory."; exit 1; }
