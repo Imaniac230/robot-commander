@@ -27,8 +27,9 @@ pushd "$llamaCppPath" || { echo "ERROR: Could not push into the '$llamaCppPath' 
 # this is desired behavior
 mkdir -p "$buildDirectory" && cd "$buildDirectory" || { echo "Failed to setup the '$buildDirectory' build directory !"; exit 1; }
 # shellcheck disable=SC2015
+# shellcheck disable=SC2086
 # this is desired behavior
-cmake .. -G Ninja "$llamaCppOptions" "$cudaOptions" -DCMAKE_BUILD_TYPE=Release && ninja -j 16 || { echo "Failed to build llama.cpp !"; exit 1; }
+cmake .. -G Ninja $llamaCppOptions $cudaOptions -DCMAKE_BUILD_TYPE=Release && ninja -j 16 || { echo "Failed to build llama.cpp !"; exit 1; }
 popd || { echo "ERROR: Could not pop out of the '$llamaCppPath' directory."; exit 1; }
 echo -e "\nllama.cpp built successfully.\n"
 
@@ -38,8 +39,9 @@ pushd "$whisperCppPath" || { echo "ERROR: Could not push into the '$whisperCppPa
 # this is desired behavior
 mkdir -p "$buildDirectory" && cd "$buildDirectory" || { echo "Failed to setup the '$buildDirectory' build directory !"; exit 1; }
 # shellcheck disable=SC2015
+# shellcheck disable=SC2086
 # this is desired behavior
-cmake .. -G Ninja "$whisperCppOptions" "$cudaOptions" -DCMAKE_BUILD_TYPE=Release && ninja -j 16 || { echo "Failed to build whisper.cpp !"; exit 1; }
+cmake .. -G Ninja $whisperCppOptions $cudaOptions -DCMAKE_BUILD_TYPE=Release && ninja -j 16 || { echo "Failed to build whisper.cpp !"; exit 1; }
 popd || { echo "ERROR: Could not pop out of the '$whisperCppPath' directory."; exit 1; }
 echo -e "\nwhisper.cpp built successfully.\n"
 
