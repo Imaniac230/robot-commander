@@ -39,12 +39,61 @@ To install and build the main required libraries, run the setup script:
 ```bash
 ./setup.sh
 ```
->NOTE: If you want to compile `llama.cpp` and `whisper.cpp` with different options, please refer to their respective documentation for more detailed compilation explanations.
+>NOTE: If you want to compile `llama.cpp` and `whisper.cpp` with different options, please refer to their respective instructions for more detailed compilation steps.
 
 #### Download and quantize
 
-This project requires all models to be downloaded and/or quantized manually before running any examples.
->TODO: Add simplified steps
+This project requires all models to be downloaded and/or quantized manually before running any examples. To get the most comprehensive and up-to-date instructions, please always follow the instructions in the [llama.cpp](https://github.com/ggerganov/llama.cpp?tab=readme-ov-file#prepare-and-quantize) and [whisper.cpp](https://github.com/ggerganov/whisper.cpp/tree/master/models#whisper-model-files-in-custom-ggml-format) README. Here are basic simplified example steps to prepare the `whisper`, `llama3`, and `bark` models for use:
+
+***Whisper***
+1. Download the official `whisper` repo from OpenAI:
+   ```
+   git clone https://github.com/openai/whisper.git
+   ```
+2. Download one of the official models from OpenAI, ex:
+   ```
+   wget https://openaipublic.azureedge.net/main/whisper/models/e5b1a55b89c1367dacf97e3e19bfd829a01529dbfdeefa8caeb59b3f1b81dadb/large-v3.pt
+   ```
+   > Or download from OpenAI on huggingface, ex:
+   > ```
+   > git clone https://huggingface.co/openai/whisper-large-v3
+   > ```
+   > Make sure that you have `git lfs` installed: `git lfs install`
+3. Use the `convert-pt-to-ggml.py` script from `whisper.cpp` to convert, ex:
+   ```
+   python libs/whisper_cpp/models/convert-pt-to-ggml.py <path-to-downloaded-model-file>/large-v3.pt <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
+   ```
+   > To convert the model downloaded from huggingface, use `convert-h5-to-ggml.py` instead, ex:
+   > ```
+   > python libs/whisper_cpp/models/convert-h5-to-ggml.py <path-to-downloaded-model-files> <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
+   > ```
+4. Quantize the converted model, ex.:
+   ```
+   ./libs/whisper_cpp/build/bin/quantize <path-to-converted-file>/ggml-model-f16-large-v3.bin <path-to-quantized-file>/ggml-model-q4_0-large-v3.bin q4_0
+   ```
+
+ ***Llama3***
+1. Download one of the official models from Meta on huggingface, ex.:
+   ```
+   git clone https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct
+   ```
+   > Make sure that you have `git lfs` installed: `git lfs install`
+2. Use the `convert-hf-to-gguf.py` script from `llama.cpp` to convert, ex.:
+   ```
+   python libs/llama_cpp/convert-hf-to-gguf.py <path-to-downloaded-model-files> --outtype f16
+   ```
+3. Quantize the converted model, ex.:
+   ```
+   ./libs/llama_cpp/build/bin/quantize <path-to-converted-file>/ggml-model-f16.gguf <path-to-quantized-file>/ggml-model-q4_0.gguf Q4_0
+   ```
+
+***Bark***
+1. Download the official model files from SunoAI on huggingface, ex:
+   ```
+   git clone https://huggingface.co/suno/bark
+   ```
+   > Make sure that you have `git lfs` installed: `git lfs install`
+> The GGML format and quantization for bark are currently not supported in this project.
 
 ### External API
 
