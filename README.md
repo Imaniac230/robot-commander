@@ -1,9 +1,8 @@
 # Robot Commander
 
 >TODO: Update outdated README:
-> * add steps for preparing all dependency libraries (llama_cpp, whisper_cpp, bark)
-> * add notes for downloading and preparing local models
-> * add examples for using the local interfaces in addition to the openai API
+> * add usage examples for the local interfaces in addition to the openai API
+> * add some example demonstration results (video?)
 
 ## Requirements
 
