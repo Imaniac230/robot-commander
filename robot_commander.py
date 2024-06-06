@@ -1,4 +1,4 @@
-from utils import Recorder
+from utils import Recorder, ROSPublisher, RobotChat
 from commander import Commander, CommanderParams
 from ai_interface import Bark, TTSParams
 from pynput.keyboard import Key
@@ -11,8 +11,6 @@ import time
 
 #TODO(ros): this example should be implemented as the main ROS node for this project and it shouldn't have to be limited only to python in any way,
 #   also expose all relevant parameters into the config
-#FIXME(oai-requests): raw requests to the oai API will not work properly here yet, the system prompt will have to be provided from here
-#   together with the user request, however, the local models are already initialized with the system prompt during server launch
 def handle_requests() -> None:
     #TODO(tts-server): local tts server is not yet supported, must load the model with each prompt for now
     bark = Bark(TTSParams(model_path=args.tts_model_path, voice="announcer"))
@@ -76,7 +74,12 @@ def handle_requests() -> None:
         try:
             print("\nResponding ...")
             #TODO(tts-server): local tts server is not yet supported, must load the model with each prompt for now
-            response = chat_commander.respond(input_recording, playback_response=not args.use_local, response_format=None)
+            response = chat_commander.respond(
+                input_recording,
+                playback_response=not args.use_local,
+                response_format=None,
+                system_prompt=RobotChat("robot-chat.txt").prompt() if not args.use_local else None
+            )
             if args.use_local:
                 bark.synthesize(response, load_model=True)
                 bark.play_synthesis()
@@ -95,7 +98,11 @@ def handle_requests() -> None:
 
         try:
             print("\nGenerating commands ...")
-            messages = json.loads(ros_commander.respond(input_recording, response_format="grammars/posestamped.json"))
+            messages = json.loads(ros_commander.respond(
+                input_recording,
+                response_format="grammars/posestamped.json" if args.use_local else None, #NOTE: the restricted oai output doesn't seem to be wrapping the messages in an array correctly
+                system_prompt=ROSPublisher("ros-publisher.txt").prompt() if not args.use_local else None
+            ))
             print("\nDone")
 
             print(f"\nsummary:\n\t{input_recording} -> "
@@ -128,7 +135,7 @@ if __name__ == "__main__":
     parser.add_argument('--ros_topic', type=str, required=True, help='Topic for commanding the robot.')
     parser.add_argument('--ros_message_type', type=str, required=True, help='Message type for the topic.')
     #TODO(tts-server): local tts server is not yet supported, must load the model with each prompt for now
-    parser.add_argument('--tts_model_path', type=str, required=True, help='Path to the local tts model files (this must currently be provided, as the server is not utilized).')
+    parser.add_argument('--tts_model_path', type=str, default=None, help='Path to the local tts model files (this must currently be provided, as the server is not utilized).')
     args: argparse.Namespace = parser.parse_args()
 
     ros_client = roslibpy.Ros(host=args.ros_host, port=args.ros_port)

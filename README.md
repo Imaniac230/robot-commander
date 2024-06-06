@@ -1,9 +1,5 @@
 # Robot Commander
 
->TODO: Update outdated README:
-> * add usage examples for the local interfaces in addition to the openai API
-> * add some example demonstration results (video?)
-
 ## Requirements
 
 ### Local models
@@ -126,4 +122,17 @@ You can use the current proof-of-concept examples to test out the application.
 
 ### External API
 
->TODO: This section is not yet completed.
+1. Specify your "keyword" contexts for the `PoseStamped` ROS message in `messages/contexts/posestamped.txt`.
+2. Start the ros-bridge server node:
+   ```
+   . /opt/ros/<ros-distro>/setup.bash && ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+   ```
+3. Start the commander:
+   ```
+   python3 robot_commander.py --ros_topic <ros-topic-name> --ros_message_type geometry_msgs/msg/PoseStamped --api_key $OPENAI_API_KEY
+   ```
+4. Start providing voice commands in natural language.
+
+## Results
+
+>TODO: add some example demonstration results (video?)
