@@ -18,7 +18,7 @@ This project is currently developed to use the public openai API server requests
 
 To integrate with ROS2, the current proof-of-concept examples simply utilize the `roslibpy` library together with `rosbridge`. In order to use all the current examples, you should install the following dependencies:
 ```bash
-sudo apt install portaudio19-dev && pip install roslibpy pyaudio openai
+sudo apt install portaudio19-dev && pip install roslibpy pyaudio
 ```
 
 and the ros bridge:
@@ -136,3 +136,7 @@ You can use the current proof-of-concept examples to test out the application.
 ## Results
 
 >TODO: add some example demonstration results (video?)
+
+## Other examples
+
+Some other examples, such as the `voice_prompted_image.py` script use a wrapper around the `openai` python library. If you want to use that, you will also have to install the library: `pip install openai`.
