@@ -104,7 +104,7 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
     prompt_init: Dict[str, str] = system_init[2]
     input_recording: str = "input_recording.wav"
 
-    #TODO(efficient-agents): We wouldn't need two separate tts instances here, as they are identical,
+    #TODO(efficient-agents): We wouldn't need two separate stt instances here, as they are identical,
     #   but the current design doesn't support any cross-sharing between independent agents.
     #   If the requests are made from an external requestor (which should be the target case), then one of them could be omitted.
     ros_agent = Agent(

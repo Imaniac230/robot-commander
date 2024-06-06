@@ -60,11 +60,11 @@ This project requires all models to be downloaded and/or quantized manually befo
    > Make sure that you have `git lfs` installed: `git lfs install`
 3. Use the `convert-pt-to-ggml.py` script from `whisper.cpp` to convert, ex:
    ```
-   python libs/whisper_cpp/models/convert-pt-to-ggml.py <path-to-downloaded-model-file>/large-v3.pt <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
+   python3 libs/whisper_cpp/models/convert-pt-to-ggml.py <path-to-downloaded-model-file>/large-v3.pt <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
    ```
    > To convert the model downloaded from huggingface, use `convert-h5-to-ggml.py` instead, ex:
    > ```
-   > python libs/whisper_cpp/models/convert-h5-to-ggml.py <path-to-downloaded-model-files> <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
+   > python3 libs/whisper_cpp/models/convert-h5-to-ggml.py <path-to-downloaded-model-files> <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
    > ```
 4. Quantize the converted model, ex.:
    ```
@@ -79,7 +79,7 @@ This project requires all models to be downloaded and/or quantized manually befo
    > Make sure that you have `git lfs` installed: `git lfs install`
 2. Use the `convert-hf-to-gguf.py` script from `llama.cpp` to convert, ex.:
    ```
-   python libs/llama_cpp/convert-hf-to-gguf.py <path-to-downloaded-model-files> --outtype f16
+   python3 libs/llama_cpp/convert-hf-to-gguf.py <path-to-downloaded-model-files> --outtype f16
    ```
 3. Quantize the converted model, ex.:
    ```
@@ -103,15 +103,27 @@ export OPENAI_API_KEY=<secret-key>
 or use it directly when running the examples.
 
 ## Usage
->TODO: This section is outdated and will be updated once the project is more fledged.
-* source ROS and start the ros bridge node:
-```
-. /opt/ros/<ros-distro>/setup.bash && ros2 launch rosbridge_server rosbridge_websocket_launch.xml
-```
 
-* start the commander:
-```
-python3 voice_control.py --topic <ros-topic-name> --type <ros-message-type>
-```
+You can use the current proof-of-concept examples to test out the application.
 
-* start providing voice commands in your native natural language and be explicit rather than too abstract
+### Local models
+
+1. Specify your "keyword" contexts for the `PoseStamped` ROS message in `messages/contexts/posestamped.txt`.
+2. Launch the local agent server:
+   ```
+   python3 robot_commander_agent_server.py --net_interface <network-interface-for-servers> --stt_model_file <path-to-quantized-whisper-model> --llm_model_file <path-to-quantized-llama3-model> --tts_model_path <path-to-bark-model-files>
+   ```
+3. Start the ros-bridge server node:
+   ```
+   . /opt/ros/<ros-distro>/setup.bash && ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+   ```
+4. Start the commander:
+   ```
+   SUNO_USE_SMALL_MODELS=True python3 robot_commander.py --ros_topic <ros-topic-name> --ros_message_type geometry_msgs/msg/PoseStamped --local_address <agent-server-hostname-or-ip-address> --tts_model_path <path-to-bark-model-files>
+   ```
+   > Bark TTS is currently not used as an agent server and must be loaded dynamically here for each request. Only the raw pytorch models are supported. Bark will attempt to use CUDA by default, if you want run it on CPU only, also specify `SUNO_OFFLOAD_CPU=True`. If you have enough memory to hold the full Bark models, you can omit the `SUNO_USE_SMALL_MODELS` option. Please refer to the [Bark](https://github.com/suno-ai/bark?tab=readme-ov-file#how-much-vram-do-i-need) README for more details.
+5. Start providing voice commands in natural language.
+
+### External API
+
+>TODO: This section is not yet completed.
