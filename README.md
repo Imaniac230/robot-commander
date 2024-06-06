@@ -119,7 +119,7 @@ You can use the current proof-of-concept examples to test out the application.
    ```
 4. Start the commander:
    ```
-   SUNO_USE_SMALL_MODELS=True python3 robot_commander.py --ros_topic <ros-topic-name> --ros_message_type geometry_msgs/msg/PoseStamped --local_address <agent-server-hostname-or-ip-address> --tts_model_path <path-to-bark-model-files>
+   SUNO_USE_SMALL_MODELS=True python3 robot_commander.py --use_local --ros_topic <ros-topic-name> --ros_message_type geometry_msgs/msg/PoseStamped --local_address <agent-server-hostname-or-ip-address> --tts_model_path <path-to-bark-model-files>
    ```
    > Bark TTS is currently not used as an agent server and must be loaded dynamically here for each request. Only the raw pytorch models are supported. Bark will attempt to use CUDA by default, if you want run it on CPU only, also specify `SUNO_OFFLOAD_CPU=True`. If you have enough memory to hold the full Bark models, you can omit the `SUNO_USE_SMALL_MODELS` option. Please refer to the [Bark](https://github.com/suno-ai/bark?tab=readme-ov-file#how-much-vram-do-i-need) README for more details.
 5. Start providing voice commands in natural language.

@@ -120,7 +120,7 @@ def handle_requests() -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--use_local', type=bool, default=False, help='Use local servers for requests. If false, will use OpenAI servers.')
+    parser.add_argument('--use_local', action='store_true', default=False, help='Use local servers for requests. If false, will use OpenAI servers.')
     parser.add_argument('--local_address', type=str, default='127.0.0.1', help='Address for local server requests.')
     parser.add_argument('--api_key', type=str, default=None, help='OpenAI or custom (if used for local models) API key.')
     parser.add_argument('--ros_host', type=str, default='localhost', help='ROS bridge host.')
