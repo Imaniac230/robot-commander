@@ -88,7 +88,15 @@ This project requires all models to be downloaded and/or quantized manually befo
    git clone https://huggingface.co/suno/bark
    ```
    > Make sure that you have `git lfs` installed: `git lfs install`
-> The GGML format and quantization for bark are currently not supported in this project.
+> NOTE: The GGML format and quantization for bark are currently only experimental. Use the full pytorch models if you want the best results.
+2. Use the `convert.py` script from `bark.cpp` to convert, ex.:
+   ```
+   python3 libs/bark_cpp/convert.py --dir-model <path-to-downloaded-model-files> --use-f16 && mv <path-to-converted-file>/ggml_weights.bin <path-to-converted-file>/ggml-model-f16.bin
+   ```
+3. Quantize the converted model, ex.:
+   ```
+   ./libs/bark_cpp/build/examples/quantize/quantize <path-to-converted-file>/ggml-model-f16.bin <path-to-quantized-file>/ggml-model-q4_0.bin q4_0
+   ```
 
 ### External API
 
@@ -107,7 +115,7 @@ You can use the current proof-of-concept examples to test out the application.
 1. Specify your "keyword" contexts for the `PoseStamped` ROS message in `messages/contexts/posestamped.txt`.
 2. Launch the local agent server:
    ```
-   python3 robot_commander_agent_server.py --net_interface <network-interface-for-servers> --stt_model_file <path-to-quantized-whisper-model> --llm_model_file <path-to-quantized-llama3-model> --tts_model_path <path-to-bark-model-files>
+   python3 robot_commander_agent_server.py --net_interface <network-interface-for-servers> --stt_model_file <path-to-quantized-whisper-model> --llm_model_file <path-to-quantized-llama3-model> --tts_model_file <path-to-quantized-bark-model>
    ```
 3. Start the ros-bridge server node:
    ```
@@ -115,9 +123,14 @@ You can use the current proof-of-concept examples to test out the application.
    ```
 4. Start the commander:
    ```
-   SUNO_USE_SMALL_MODELS=True python3 robot_commander.py --use_local --ros_topic <ros-topic-name> --ros_message_type geometry_msgs/msg/PoseStamped --local_address <agent-server-hostname-or-ip-address> --tts_model_path <path-to-bark-model-files>
+   SUNO_USE_SMALL_MODELS=True python3 robot_commander.py --use_local --ros_topic <ros-topic-name> --ros_message_type geometry_msgs/msg/PoseStamped --local_address <agent-server-hostname-or-ip-address> --pytorch_tts_model_path <path-to-pytorch-bark-model-files>
    ```
-   > Bark TTS is currently not used as an agent server and must be loaded dynamically here for each request. Only the raw pytorch models are supported. Bark will attempt to use CUDA by default, if you want run it on CPU only, also specify `SUNO_OFFLOAD_CPU=True`. If you have enough memory to hold the full Bark models, you can omit the `SUNO_USE_SMALL_MODELS` option. Please refer to the [Bark](https://github.com/suno-ai/bark?tab=readme-ov-file#how-much-vram-do-i-need) README for more details.
+   > The raw pytorch Bark implementation will attempt to use CUDA by default, if you want run it on CPU only, also specify `SUNO_OFFLOAD_CPU=True`. If you have enough memory to hold the full Bark models, you can omit the `SUNO_USE_SMALL_MODELS` option. Please refer to the [Bark](https://github.com/suno-ai/bark?tab=readme-ov-file#how-much-vram-do-i-need) README for more details.
+
+   > NOTE: Quantized Bark TTS agent server is currently only experimental. For best results, use the raw pytorch models, which do not support a server mode, and must be loaded dynamically for each request. To use the experimental server, start with:
+   > ```
+   > python3 robot_commander.py --use_local --ros_topic <ros-topic-name> --ros_message_type geometry_msgs/msg/PoseStamped --local_address <agent-server-hostname-or-ip-address>
+   > ```
 5. Start providing voice commands in natural language.
 
 ### External API

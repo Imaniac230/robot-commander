@@ -12,7 +12,9 @@ def local_model_factory() -> Dict[str, str]:
     models: str = "/media/user/data_ssd/models"
     llm: str = models + "/llama3/hf/Meta-Llama-3-8B-Instruct/ggml-model-q4_0.gguf"
     stt: str = models + "/whisper/large/ggml-model-q4_0-large-v3.bin"
-    tts: str = models + "/bark/"
+    #TODO(tts-server): test the experimental bark.cpp server
+    # tts: str = models + "/bark/hf/bark/"
+    tts: str = models + "/bark/hf/bark/ggml-model-q4_0.bin"
     tts_voice: str = "announcer"
     return dict(stt=stt, llm=llm, tts=tts, tts_voice=tts_voice)
 
@@ -94,7 +96,7 @@ def openai_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str
 
 def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]], model_init: Dict[str, str]) -> None:
     from utils import Recorder
-    from ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, Bark, TTSParams
+    from ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, Bark, BarkCPP, TTSParams
     from pynput.keyboard import Key
     from commander import Agent
     import netifaces as ni
@@ -143,10 +145,17 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
             n_of_parallel_server_requests=1
         )),
         #TODO(tts-server): import server for tts once it is reasonably available
-        Bark(TTSParams(
+        # Bark(TTSParams(
+        #     model_path=model_init["tts"],
+        #     voice=model_init["tts_voice"]
+        # )),
+        BarkCPP(TTSParams(
             model_path=model_init["tts"],
-            voice=model_init["tts_voice"]
-        ))).launch()
+            voice=model_init["tts_voice"],# not used by local server yet
+            server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
+            server_port=8084
+        ))
+    ).launch()
 
     while True:
         try:

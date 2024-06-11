@@ -2,6 +2,7 @@ from utils import Recorder, ROSPublisher, RobotChat
 from commander import Commander, CommanderParams
 from ai_interface import Bark, TTSParams
 from pynput.keyboard import Key
+from typing import Optional
 
 import argparse
 import json
@@ -12,8 +13,9 @@ import time
 #TODO(ros): this example should be implemented as the main ROS node for this project and it shouldn't have to be limited only to python in any way,
 #   also expose all relevant parameters into the config
 def handle_requests() -> None:
-    #TODO(tts-server): local tts server is not yet supported, must load the model with each prompt for now
-    bark = Bark(TTSParams(model_path=args.tts_model_path, voice="announcer"))
+    #TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
+    bark: Optional[Bark] = None
+    if args.pytorch_tts_model_path is not None: bark = Bark(TTSParams(model_path=args.pytorch_tts_model_path, voice=args.chat_voice if args.chat_voice is not None else "announcer"))
 
     input_recording: str = "input_recording.wav"
     if args.use_local:
@@ -23,6 +25,9 @@ def handle_requests() -> None:
                 stt_endpoint="/inference",
                 llm_host="http://" + args.local_address + ":8083",
                 llm_endpoint="/v1/chat/completions",
+                tts_host="http://" + args.local_address + ":8084" if args.pytorch_tts_model_path is None else None,
+                tts_endpoint="/v1/audio/speech" if args.pytorch_tts_model_path is None else None,
+                tts_voice=args.chat_voice if args.chat_voice is not None else "announcer"
         ))
         ros_commander = Commander(
             CommanderParams(
@@ -42,7 +47,7 @@ def handle_requests() -> None:
                 llm_name="gpt-4o",
                 tts_host="https://api.openai.com",
                 tts_endpoint="/v1/audio/speech",
-                tts_voice="fable",
+                tts_voice=args.chat_voice if args.chat_voice is not None else "fable",
                 tts_name="tts-1",
                 api_key=args.api_key
         ))
@@ -73,14 +78,14 @@ def handle_requests() -> None:
 
         try:
             print("\nResponding ...")
-            #TODO(tts-server): local tts server is not yet supported, must load the model with each prompt for now
+            #TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
             response = chat_commander.respond(
                 input_recording,
-                playback_response=not args.use_local,
+                playback_response=bark is None,
                 response_format=None,
                 system_prompt=RobotChat("robot-chat.txt").prompt() if not args.use_local else None
             )
-            if args.use_local:
+            if bark is not None:
                 bark.synthesize(response, load_model=True)
                 bark.play_synthesis()
             print("\nDone")
@@ -134,8 +139,9 @@ if __name__ == "__main__":
     parser.add_argument('--ros_port', type=int, default='9090', help='ROS bridge port.')
     parser.add_argument('--ros_topic', type=str, required=True, help='Topic for commanding the robot.')
     parser.add_argument('--ros_message_type', type=str, required=True, help='Message type for the topic.')
-    #TODO(tts-server): local tts server is not yet supported, must load the model with each prompt for now
-    parser.add_argument('--tts_model_path', type=str, default=None, help='Path to the local tts model files (this must currently be provided, as the server is not utilized).')
+    parser.add_argument('--chat_voice', type=str, default=None, help='Voice type to be used by the tts. Note that local SunoAI and remote OpenAI use different options. For local, this is only valid when using the pytorch models here.')
+    #TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
+    parser.add_argument('--pytorch_tts_model_path', type=str, default=None, help='Path to the local pytorch tts model files. Use this for better results, the server is currently only experimental.')
     args: argparse.Namespace = parser.parse_args()
 
     ros_client = roslibpy.Ros(host=args.ros_host, port=args.ros_port)

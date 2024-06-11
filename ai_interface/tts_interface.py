@@ -1,22 +1,30 @@
 from scipy.io.wavfile import write as write_wav
 from dataclasses import dataclass
 from typing_extensions import Self
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Dict
 
 from bark import generate_audio, SAMPLE_RATE
 from bark.generation import generate_text_semantic
 from bark.api import semantic_to_waveform
 
+from utils import Requestor
+
 import sounddevice as sd
+import soundfile as sf
 import numpy as np
 import threading as th
+import subprocess as sp
 import nltk
+import os
 
 
 @dataclass
 class TTSParams:
     model_path: str
     voice: str
+    server_hostname: Optional[str] = None
+    server_port: Optional[int] = None
+    n_of_threads_to_use: Optional[int] = None
 
 
 class TTS:
@@ -75,9 +83,48 @@ class Bark(TTS):
         return self.last_generation
 
 
+#TODO(bark-cpp): this is only a preliminary implementation to enable testing with the current bark.cpp state
+#   refactor this once a stable release is available
 class BarkCPP(TTS):
     def __init__(self, params: TTSParams) -> None:
         super().__init__(params)
+        # TODO(paths): find a more canonical way of handling this (env vars?, installation?)
+        self.library_path: str = str(os.path.realpath(__package__).rstrip(os.path.basename(__package__))) + 'libs/bark_cpp'
+        self.bin_path: str = "build/examples"
+        # TODO: check failures
+        self.server_worker = th.Thread(target=sp.run, args=[self._build_command("server")])
+
+    def _build_command(self, command: str, prompt: str = "") -> List[str]:
+        full_command: str = self.library_path + '/' + self.bin_path + '/' + command + '/' + command
+
+        # implicit params
+        # configurable params (required)
+        args: List[str] = ["--model", self.params.model_path]
+        # configurable params (optional, default by bark.cpp implementation)
+        if self.params.n_of_threads_to_use is not None: args += ["--threads", str(self.params.n_of_threads_to_use)]
+
+        if command == "server":
+            if self.params.server_hostname is not None: args += ["--address", self.params.server_hostname]
+            if self.params.server_port is not None: args += ["--port", str(self.params.server_port)]
+        elif command == "main":
+            args += ["--prompt", prompt]
+            args += ["--outwav", self.generated_file]
+        else:
+            raise NotImplementedError(f"command '{command}' is not supported")
+
+        return [full_command] + args
 
     def synthesize(self, prompt: str, load_model: bool = False) -> Any:
-        raise NotImplementedError("Support for bark_cpp is not yet implemented!")
+        #NOTE: the example main always stores the output into a wav file
+        if load_model: sp.check_output(self._build_command("main", prompt))
+        else:
+            if self.server_worker.is_alive():
+                #TODO(bark-cpp): using a custom finalization of the server, refactor this once there is a stable bark.cpp release
+                payload = {"input": prompt}
+                r: Optional[Dict] = Requestor("http://" + self.params.server_hostname + ':' + str(self.params.server_port)).synthesize("/v1/audio/speech", payload)
+                if r is not None:
+                    with open(self.generated_file, mode="wb") as f:
+                        for data in r: f.write(data)
+
+        self.last_generation = sf.read(self.generated_file)
+        return self.last_generation

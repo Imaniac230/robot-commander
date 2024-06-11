@@ -1,4 +1,4 @@
-from ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, Bark, TTSParams
+from ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, BarkCPP, TTSParams
 from commander import Agent
 from utils import ROSPublisher, RobotChat
 
@@ -48,11 +48,14 @@ def launch_agents() -> None:
             server_port=8083,
             n_of_parallel_server_requests=1
         )),
-        #TODO(tts-server): import server for tts once it is reasonably available
-        Bark(TTSParams(
-            model_path=args.tts_model_path,
-            voice="announcer"
-        ))).launch()
+        #TODO(tts-server): local tts server is only experimental for now, refactor once a stable release is available
+        BarkCPP(TTSParams(
+            model_path=args.tts_model_file,
+            voice=args.tts_voice,# not used by local server yet
+            server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
+            server_port=8084
+        ))
+    ).launch()
 
 
 if __name__ == "__main__":
@@ -60,7 +63,8 @@ if __name__ == "__main__":
     parser.add_argument('--net_interface', type=str, default='lo', help='Network interface for servers.')
     parser.add_argument('--stt_model_file', type=str, required=True, help='Path to the local stt model file.')
     parser.add_argument('--llm_model_file', type=str, required=True, help='Path to the local llm model file.')
-    parser.add_argument('--tts_model_path', type=str, required=True, help='Path to the local tts model files (this is currently not used as a server).')
+    parser.add_argument('--tts_model_file', type=str, required=True, help='Path to the local tts model file.')
+    parser.add_argument('--tts_voice', type=str, default="announcer", help='Voice type for the local tts to use (currently not used).')
     args: argparse.Namespace = parser.parse_args()
 
     launch_agents()

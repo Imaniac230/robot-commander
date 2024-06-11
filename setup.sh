@@ -23,7 +23,10 @@ llamaCppPath="$(scriptRootDir)/libs/llama_cpp"
 llamaCppOptions="-DLLAMA_CUDA=$useCuda -DLLAMA_CUDA_F16=$useCuda -DLLAMA_NATIVE=ON -DLLAMA_AVX512=OFF"
 
 whisperCppPath="$(scriptRootDir)/libs/whisper_cpp"
-whisperCppOptions="-DWHISPER_CUDA=$useCuda -DWHISPER_NO_AVX512=ON"
+whisperCppOptions="-DWHISPER_CUDA=$useCuda -DGGML_CUDA_F16=$useCuda -DWHISPER_NO_AVX512=ON"
+
+barkCppPath="$(scriptRootDir)/libs/bark_cpp"
+barkCppOptions="-DGGML_CUBLAS=$useCuda"
 
 cudaOptions="-DCMAKE_CUDA_ARCHITECTURES=native -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc"
 
@@ -41,7 +44,7 @@ mkdir -p "$buildDirectory" && cd "$buildDirectory" || { echo "Failed to setup th
 # shellcheck disable=SC2015
 # shellcheck disable=SC2086
 # this is desired behavior
-cmake .. -G Ninja $llamaCppOptions $cudaOptions -DCMAKE_BUILD_TYPE=Release && ninja -j 16 || { echo "Failed to build llama.cpp !"; exit 1; }
+cmake .. -G Ninja $llamaCppOptions $cudaOptions -DCMAKE_BUILD_TYPE=Release && ninja || { echo "Failed to build llama.cpp !"; exit 1; }
 popd || { echo "ERROR: Could not pop out of the '$llamaCppPath' directory."; exit 1; }
 echo -e "\nllama.cpp built successfully.\n"
 
@@ -53,9 +56,22 @@ mkdir -p "$buildDirectory" && cd "$buildDirectory" || { echo "Failed to setup th
 # shellcheck disable=SC2015
 # shellcheck disable=SC2086
 # this is desired behavior
-cmake .. -G Ninja $whisperCppOptions $cudaOptions -DCMAKE_BUILD_TYPE=Release && ninja -j 16 || { echo "Failed to build whisper.cpp !"; exit 1; }
+cmake .. -G Ninja $whisperCppOptions $cudaOptions -DCMAKE_BUILD_TYPE=Release && ninja || { echo "Failed to build whisper.cpp !"; exit 1; }
 popd || { echo "ERROR: Could not pop out of the '$whisperCppPath' directory."; exit 1; }
 echo -e "\nwhisper.cpp built successfully.\n"
+
+echo -e "\nBuilding bark.cpp ...\n\n"
+pushd "$barkCppPath" || { echo "ERROR: Could not push into the '$barkCppPath' directory."; exit 1; }
+git submodule update --init --recursive
+# shellcheck disable=SC2015
+# this is desired behavior
+mkdir -p "$buildDirectory" && cd "$buildDirectory" || { echo "Failed to setup the '$buildDirectory' build directory !"; exit 1; }
+# shellcheck disable=SC2015
+# shellcheck disable=SC2086
+# this is desired behavior
+cmake .. -G Ninja $barkCppOptions $cudaOptions -DCMAKE_BUILD_TYPE=Release && ninja || { echo "Failed to build bark.cpp !"; exit 1; }
+popd || { echo "ERROR: Could not pop out of the '$barkCppPath' directory."; exit 1; }
+echo -e "\nbark.cpp built successfully.\n"
 
 echo -e "\nInstalling Bark\n\n"
 pushd "$barkPath" || { echo "ERROR: Could not push into the '$barkPath' directory."; exit 1; }

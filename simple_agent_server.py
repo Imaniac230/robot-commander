@@ -1,5 +1,5 @@
 from commander import Agent
-from ai_interface import WhisperCPP, STTParams, LlamaCPP, LLMParams
+from ai_interface import WhisperCPP, STTParams, LlamaCPP, LLMParams, BarkCPP, TTSParams
 import netifaces as ni
 import argparse
 
@@ -13,6 +13,7 @@ if __name__ == "__main__":
     models: str = "/media/user/data_ssd/models"
     llm: str = models + "/llama3/hf/Meta-Llama-3-8B-Instruct/ggml-model-q4_0.gguf"
     stt: str = models + "/whisper/large/ggml-model-q4_0-large-v3.bin"
+    tts: str = models + "/bark/hf/bark/ggml-model-q4_0.bin"
 
     Agent(
         WhisperCPP(STTParams(
@@ -29,5 +30,11 @@ if __name__ == "__main__":
             server_hostname=local_address,
             server_port=8081,
             n_of_parallel_server_requests=1
+        )),
+        BarkCPP(TTSParams(
+            model_path=tts,
+            voice="",# not used by local server yet
+            server_hostname=local_address,
+            server_port=8082
         ))
     ).launch()
