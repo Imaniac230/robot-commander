@@ -22,7 +22,7 @@ def launch_agents() -> None:
         )),
         LlamaCPP(LLMParams(
             model_path=args.llm_model_file,
-            initial_prompt=ROSPublisher('ros-publisher.txt').prompt(),
+            initial_prompt=ROSPublisher('ros-publisher.txt', environment=args.environment_context).prompt(),
             n_of_tokens_to_predict=500,
             n_of_gpu_layers_to_offload=20,
             json_schema_file_path=str(os.path.realpath(__file__).rstrip(os.path.basename(__file__))) + 'grammars/posestamped.json',
@@ -41,8 +41,8 @@ def launch_agents() -> None:
         )),
         LlamaCPP(LLMParams(
             model_path=args.llm_model_file,
-            initial_prompt=RobotChat('robot-chat.txt').prompt(),
-            n_of_tokens_to_predict=100,
+            initial_prompt=RobotChat('robot-chat.txt', personality=args.personality_context).prompt(),
+            n_of_tokens_to_predict=50,
             n_of_gpu_layers_to_offload=20,
             server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
             server_port=8083,
@@ -65,6 +65,8 @@ if __name__ == "__main__":
     parser.add_argument('--llm_model_file', type=str, required=True, help='Path to the local llm model file.')
     parser.add_argument('--tts_model_file', type=str, required=True, help='Path to the local tts model file.')
     parser.add_argument('--tts_voice', type=str, default="announcer", help='Voice type for the local tts to use (currently not used).')
+    parser.add_argument('--environment_context', type=str, default=None, help='Additional information about the agent is deployed in.')
+    parser.add_argument('--personality_context', type=str, default=None, help='Additional information about the agent personality.')
     args: argparse.Namespace = parser.parse_args()
 
     launch_agents()

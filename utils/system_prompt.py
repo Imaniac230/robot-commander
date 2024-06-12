@@ -17,7 +17,7 @@ class RobotChat(SystemPrompt):
         if personality is not None:
             if int(os.getenv("DEBUG", "0")) >= 1: print(f"personality:\n{personality}")
 
-            self._prompt += f"Here is some more info on your personality and character traits:\n{personality}\n"
+            self._prompt += f"Here is some more info on your personality and character traits:\n{personality}\n\n"
 
         if int(os.getenv("DEBUG", "0")) >= 2: print(f"full system prompt:\n{self._prompt}")
 
@@ -47,6 +47,6 @@ class ROSPublisher(SystemPrompt):
             self._prompt += f'The following lines provide context for mapping any received keywords to corresponding properties of the JSON response:\n{contexts}\n'
             self._prompt += 'Make sure you always match all JSON property values exactly each time you detect a corresponding keyword.\n\n'
         if environment is not None:
-            self._prompt += f'Additional properties of the environment that you are operating in:{environment}\n\n'
+            self._prompt += f'Additional properties of the environment that you are operating in:\n{environment}\n\n'
 
         if int(os.getenv("DEBUG", "0")) >= 2: print(f"full system prompt:\n{self._prompt}")
