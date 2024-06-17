@@ -83,7 +83,7 @@ def handle_requests() -> None:
                 input_recording,
                 playback_response=bark is None,
                 response_format=None,
-                system_prompt=RobotChat("robot-chat.txt").prompt() if not args.use_local else None
+                system_prompt=RobotChat("robot-chat.txt", personality=args.personality_context).prompt() if not args.use_local else None
             )
             if bark is not None:
                 bark.synthesize(response, load_model=True)
@@ -106,7 +106,7 @@ def handle_requests() -> None:
             messages = json.loads(ros_commander.respond(
                 input_recording,
                 response_format="grammars/posestamped.json" if args.use_local else None, #NOTE: the restricted oai output doesn't seem to be wrapping the messages in an array correctly
-                system_prompt=ROSPublisher("ros-publisher.txt").prompt() if not args.use_local else None
+                system_prompt=ROSPublisher("ros-publisher.txt", environment=args.environment_context).prompt() if not args.use_local else None
             ))
             print("\nDone")
 
@@ -142,6 +142,9 @@ if __name__ == "__main__":
     parser.add_argument('--chat_voice', type=str, default=None, help='Voice type to be used by the tts. Note that local SunoAI and remote OpenAI use different options. For local, this is only valid when using the pytorch models here.')
     #TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
     parser.add_argument('--pytorch_tts_model_path', type=str, default=None, help='Path to the local pytorch tts model files. Use this for better results, the server is currently only experimental.')
+    #this is only necessary if using the oai API
+    parser.add_argument('--environment_context', type=str, default=None, help='Additional information about the agent is deployed in (required only for OpenAI requests).')
+    parser.add_argument('--personality_context', type=str, default=None, help='Additional information about the agent personality (required only for OpenAI requests).')
     args: argparse.Namespace = parser.parse_args()
 
     ros_client = roslibpy.Ros(host=args.ros_host, port=args.ros_port)
