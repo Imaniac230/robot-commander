@@ -4,7 +4,13 @@ import requests as rq
 
 class Requestor:
     def __init__(self, url: str, api_key: Optional[str] = None) -> None:
-        self.headers: Dict[str, str] = dict(Authorization=f"Bearer {api_key if api_key is not None else 'no-key'}")
+        self.headers: Dict[str, str] = dict()
+        if api_key is not None:
+            # This is used by the OpenAI API
+            self.headers["Authorization"] = f"Bearer {api_key}"
+            # This is used by the Anthropic API
+            self.headers["X-API-Key"] = api_key
+            self.headers["Anthropic-Version"] = "2023-06-01"
         self.url: str = url
 
     @classmethod
