@@ -107,8 +107,7 @@ class BarkCPP(TTS):
             if self.params.server_hostname is not None: args += ["--address", self.params.server_hostname]
             if self.params.server_port is not None: args += ["--port", str(self.params.server_port)]
         elif command == "main":
-            args += ["--prompt", prompt]
-            args += ["--outwav", self.generated_file]
+            args += ["--prompt", prompt, "--outwav", self.generated_file]
         else:
             raise NotImplementedError(f"command '{command}' is not supported")
 

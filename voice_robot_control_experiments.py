@@ -23,6 +23,7 @@ def init_factory() -> Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]]:
     from utils import ROSPublisher, RobotChat
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('--load_models', action='store_true', default=False, help='Load models for each prompt instead of spawning servers.')
     parser.add_argument('--net_interface', type=str, default='lo', help='Network interface for servers.')
     parser.add_argument('--api_key', type=str, default=None, help='OpenAI or custom (if used for local models) API key.')
     parser.add_argument('--ros_host', type=str, default='localhost', help='ROS bridge host.')
@@ -126,7 +127,8 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
             server_port=8081,
             n_of_parallel_server_requests=1
         ))
-    ).launch()
+    )
+    if not args.load_models: ros_agent.launch()
 
     chat_agent = Agent(
         WhisperCPP(STTParams(
@@ -155,7 +157,8 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
             server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
             server_port=8084
         ))
-    ).launch()
+    )
+    if not args.load_models: chat_agent.launch()
 
     while True:
         try:
@@ -173,7 +176,7 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
 
         try:
             print("\nResponding ...")
-            chat_agent.respond(input_recording, load_models=False, playback_response=True)
+            chat_agent.respond(input_recording, load_models=args.load_models, playback_response=True)
             print("\nDone")
 
             print(f"\nsummary:\n\t{input_recording} -> "
@@ -189,7 +192,7 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
 
         try:
             print("\nGenerating commands ...")
-            messages = json.loads(ros_agent.respond(input_recording, load_models=False))
+            messages = json.loads(ros_agent.respond(input_recording, load_models=args.load_models))
             print("\nDone")
 
             publisher = roslibpy.Topic(ros_client, args.ros_topic, args.ros_message_type)

@@ -18,7 +18,7 @@ class LLMParams:
     temperature: Optional[float] = None
     n_of_gpu_layers_to_offload: Optional[int] = None
     json_schema_file_path: Optional[str] = None
-    grammar_file_path: Optional[str] = None
+    grammar_file_path: Optional[str] = None #TODO(grammar): decide if we will actually still use this
     server_hostname: Optional[str] = None
     server_port: Optional[int] = None
     n_of_parallel_server_requests: Optional[int] = None
@@ -54,7 +54,7 @@ class LlamaCPP(LLM):
         self.library_path: str = str(os.path.realpath(__package__).rstrip(os.path.basename(__package__))) + 'libs/llama_cpp'
         self.bin_path: str = "build/bin"
         # TODO: check failures
-        self.server_worker = th.Thread(target=sp.run, args=[self._build_command("server")])
+        self.server_worker = th.Thread(target=sp.run, args=[self._build_command("llama-server")])
 
     def _build_command(self, command: str, prompt: str = "") -> List[str]:
         full_command: str = self.library_path + '/' + self.bin_path + '/' + command
@@ -63,13 +63,12 @@ class LlamaCPP(LLM):
         # load context size from model hparams
         args: List[str] = ["--ctx-size", str(0)]
         # configurable params (required)
-        args += ["--model", self.params.model_path]
-        args += ["--n-predict", str(self.params.n_of_tokens_to_predict)]
+        args += ["--model", self.params.model_path, "--n-predict", str(self.params.n_of_tokens_to_predict)]
         # configurable params (optional, default by llama.cpp implementation)
         if self.params.n_of_gpu_layers_to_offload is not None: args += ["--n-gpu-layers", str(self.params.n_of_gpu_layers_to_offload)]
         if self.params.n_of_threads_to_use is not None: args += ["--threads", str(self.params.n_of_threads_to_use), "--threads-batch", str(self.params.n_of_threads_to_use)]
 
-        if command == "server":
+        if command == "llama-server":
             # implicit params
             # publish server metrics
             args += ["--metrics"]
@@ -90,26 +89,28 @@ class LlamaCPP(LLM):
             if self.params.server_hostname is not None: args += ["--host", self.params.server_hostname]
             if self.params.server_port is not None: args += ["--port", str(self.params.server_port)]
             # [grammar, temperature, n_keep] are specified in each server request
-        elif command == "main":
+        elif command == "llama-cli":
             # implicit params
-            # don't output the prompt
-            args += ["--no-display-prompt"]
+            # don't output the given prompt and stop generation on specified sequence
+            args += ["--no-display-prompt", "--reverse-prompt", "REQUEST:"]
             # we can't provide both an input file and a prompt, so we combine the initial prompt with the provided prompt here
             args += ["--keep", str(len(self.params.initial_prompt)), "--prompt", "\"" + prompt + "\""]
             # configurable params (optional, default by llama.cpp implementation)
             if self.params.temperature is not None: args += ["--temp", str(self.params.temperature)]
-            #TODO: check if main params also specify the schema param
-            if self.params.grammar_file_path is not None: args += ["--grammar-file", self.params.grammar_file_path]
+            #TODO(grammar): currently using only schema, decide if we ever need to specify the grammar
+            # if self.params.grammar_file_path is not None: args += ["--grammar-file", self.params.grammar_file_path]
+            if self.params.json_schema_file_path is not None:
+                with open(self.params.json_schema_file_path, 'r') as sch: args += ["--json-schema", json.dumps(json.load(sch))]
         else:
             raise NotImplementedError(f"command '{command}' is not supported")
 
         return [full_command] + args
 
     def respond(self, prompt: str, inline_response: bool = False, load_model: bool = False) -> str:
-        full_prompt: str = prompt if not self.params.initial_prompt else self.params.initial_prompt + ' ' + prompt
+        full_prompt: str = prompt if not self.params.initial_prompt else self.params.initial_prompt + 'REQUEST:\n' + prompt
 
         if load_model:
-            self.last_response = sp.check_output(self._build_command("main", full_prompt), text=True)
+            self.last_response = sp.check_output(self._build_command("llama-cli", full_prompt), text=True)
 
             if int(os.getenv("DEBUG", "0")) >= 2:
                 print(f"\nllm command full output:\n{self.last_response}\n")
@@ -118,8 +119,7 @@ class LlamaCPP(LLM):
                 payload = {"messages": [{"role": "user", "content": "REQUEST:\n" + prompt}], "stop": ["REQUEST:"]}
                 #TODO(grammar): decide if we will handle both grammar and schema options
                 if self.params.json_schema_file_path is not None:
-                    with open(self.params.json_schema_file_path) as sch: schema = json.load(sch)
-                    payload["response_format"] = {"type": "json_object", "schema": schema}
+                    with open(self.params.json_schema_file_path, 'r') as sch: payload["response_format"] = {"type": "json_object", "schema": json.load(sch)}
 
                 r: Optional[Dict] = Requestor("http://" + self.params.server_hostname + ':' + str(self.params.server_port)).respond("/v1/chat/completions", payload)
                 if r is not None:

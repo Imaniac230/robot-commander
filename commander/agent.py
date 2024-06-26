@@ -73,7 +73,8 @@ class Commander:
 
         json_payload = {"messages": [{"role": "user", "content": "REQUEST:\n" + self.last_transcription}], "stop": ["REQUEST:"]}
         if system_prompt is not None: json_payload["messages"] = [{"role": "system", "content": system_prompt}, json_payload["messages"][0]]
-        if response_format is not None: json_payload["response_format"] = {"type": "json_object", "schema": json.load(open(response_format))}
+        if response_format is not None:
+            with open(response_format, 'r') as sch: json_payload["response_format"] = {"type": "json_object", "schema": json.load(sch)}
         if self.params.llm_name is not None: json_payload["model"] = self.params.llm_name
         response = Requestor(self.params.llm_host, api_key=self.params.api_key).respond(self.params.llm_endpoint, json_payload)
         if response is None:
