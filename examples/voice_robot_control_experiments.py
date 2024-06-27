@@ -35,7 +35,7 @@ def init_factory() -> Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]]:
     ros = roslibpy.Ros(host=args.ros_host, port=args.ros_port)
     ros.run()
 
-    return args, ros, dict(chat=RobotChat('robot-chat.txt').prompt(), ros=ROSPublisher('ros-publisher.txt').prompt())
+    return args, ros, dict(chat=RobotChat(base_path + 'prompts/robot-chat.txt').prompt(), ros=ROSPublisher(base_path + 'prompts/ros-publisher.txt').prompt())
 
 
 def openai_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]]) -> None:
@@ -105,7 +105,7 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
     args: argparse.Namespace = system_init[0]
     ros_client: roslibpy.Ros = system_init[1]
     prompt_init: Dict[str, str] = system_init[2]
-    input_recording: str = "input_recording.wav"
+    input_recording: str = base_path + "input_recording_good.wav"
 
     #TODO(efficient-agents): We wouldn't need two separate stt instances here, as they are identical,
     #   but the current design doesn't support any cross-sharing between independent agents.
@@ -122,7 +122,7 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
             initial_prompt=prompt_init["ros"],
             n_of_tokens_to_predict=500,
             n_of_gpu_layers_to_offload=20,
-            json_schema_file_path=str(os.path.realpath(__file__).rstrip(os.path.basename(__file__))) + 'grammars/posestamped.json',
+            json_schema_file_path=base_path + 'grammars/posestamped.json',
             server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
             server_port=8081,
             n_of_parallel_server_requests=1
@@ -214,5 +214,7 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
 
 
 if __name__ == '__main__':
+    base_path: str = str(os.path.realpath(__name__).rstrip(os.path.basename(__name__)))
+
     # openai_example(init_factory())
     local_example(init_factory(), local_model_factory())

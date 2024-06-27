@@ -5,8 +5,7 @@ import os
 
 class SystemPrompt:
     def __init__(self, file_path: str) -> None:
-        # FIXME(file-path): make this a parsable path-like
-        with open(f"prompts/{file_path}", 'r') as f: self._prompt = f.read()
+        with open(file_path, 'r') as f: self._prompt = f.read()
 
     def prompt(self) -> str: return self._prompt
 

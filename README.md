@@ -30,9 +30,9 @@ sudo apt install ros-<ros-distro>-rosbridge-suite
 
 #### Build
 
-To install and build the main required libraries, run the setup script:
+To install the `robot-commander` project and install/build its main required libraries, run the setup script:
 ```bash
-./setup.sh
+./robot-commander/setup.sh
 ```
 >NOTE: If you want to compile `llama.cpp` and `whisper.cpp` with different options, please refer to their respective instructions for more detailed compilation steps.
 
@@ -56,15 +56,15 @@ This project requires all models to be downloaded and/or quantized manually befo
    > Make sure that you have `git lfs` installed: `git lfs install`
 3. Use the `convert-pt-to-ggml.py` script from `whisper.cpp` to convert, ex:
    ```
-   python3 libs/whisper_cpp/models/convert-pt-to-ggml.py <path-to-downloaded-model-file>/large-v3.pt <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
+   python3 robot-commander/libs/whisper_cpp/models/convert-pt-to-ggml.py <path-to-downloaded-model-file>/large-v3.pt <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
    ```
    > To convert the model downloaded from huggingface, use `convert-h5-to-ggml.py` instead, ex:
    > ```
-   > python3 libs/whisper_cpp/models/convert-h5-to-ggml.py <path-to-downloaded-model-files> <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
+   > python3 robot-commander/libs/whisper_cpp/models/convert-h5-to-ggml.py <path-to-downloaded-model-files> <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
    > ```
 4. Quantize the converted model, ex.:
    ```
-   ./libs/whisper_cpp/build/bin/quantize <path-to-converted-file>/ggml-model-f16-large-v3.bin <path-to-quantized-file>/ggml-model-q4_0-large-v3.bin q4_0
+   ./robot-commander/libs/whisper_cpp/build/bin/quantize <path-to-converted-file>/ggml-model-f16-large-v3.bin <path-to-quantized-file>/ggml-model-q4_0-large-v3.bin q4_0
    ```
 
  ***Llama3***
@@ -75,11 +75,11 @@ This project requires all models to be downloaded and/or quantized manually befo
    > Make sure that you have `git lfs` installed: `git lfs install`
 2. Use the `convert-hf-to-gguf.py` script from `llama.cpp` to convert, ex.:
    ```
-   python3 libs/llama_cpp/convert-hf-to-gguf.py <path-to-downloaded-model-files> --outtype f16
+   python3 robot-commander/libs/llama_cpp/convert-hf-to-gguf.py <path-to-downloaded-model-files> --outtype f16
    ```
 3. Quantize the converted model, ex.:
    ```
-   ./libs/llama_cpp/build/bin/quantize <path-to-converted-file>/ggml-model-f16.gguf <path-to-quantized-file>/ggml-model-q4_0.gguf Q4_0
+   ./robot-commander/libs/llama_cpp/build/bin/quantize <path-to-converted-file>/ggml-model-f16.gguf <path-to-quantized-file>/ggml-model-q4_0.gguf Q4_0
    ```
 
 ***Bark***
@@ -91,11 +91,11 @@ This project requires all models to be downloaded and/or quantized manually befo
 > NOTE: The GGML format and quantization for bark are currently only experimental. Use the full pytorch models if you want the best results.
 2. Use the `convert.py` script from `bark.cpp` to convert, ex.:
    ```
-   python3 libs/bark_cpp/convert.py --dir-model <path-to-downloaded-model-files> --use-f16 && mv <path-to-converted-file>/ggml_weights.bin <path-to-converted-file>/ggml-model-f16.bin
+   python3 robot-commander/libs/bark_cpp/convert.py --dir-model <path-to-downloaded-model-files> --use-f16 && mv <path-to-converted-file>/ggml_weights.bin <path-to-converted-file>/ggml-model-f16.bin
    ```
 3. Quantize the converted model, ex.:
    ```
-   ./libs/bark_cpp/build/examples/quantize/quantize <path-to-converted-file>/ggml-model-f16.bin <path-to-quantized-file>/ggml-model-q4_0.bin q4_0
+   ./robot-commander/libs/bark_cpp/build/examples/quantize/quantize <path-to-converted-file>/ggml-model-f16.bin <path-to-quantized-file>/ggml-model-q4_0.bin q4_0
    ```
 
 ### External API

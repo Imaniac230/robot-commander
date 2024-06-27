@@ -8,6 +8,7 @@ import argparse
 import json
 import roslibpy
 import time
+import os
 
 
 #TODO(ros): this example should be implemented as the main ROS node for this project and it shouldn't have to be limited only to python in any way,
@@ -17,7 +18,7 @@ def handle_requests() -> None:
     bark: Optional[Bark] = None
     if args.pytorch_tts_model_path is not None: bark = Bark(TTSParams(model_path=args.pytorch_tts_model_path, voice=args.chat_voice if args.chat_voice is not None else "announcer"))
 
-    input_recording: str = "input_recording.wav"
+    input_recording: str = script_path + "input_recording.wav"
     if args.use_local:
         chat_commander = Commander(
             CommanderParams(
@@ -83,7 +84,7 @@ def handle_requests() -> None:
                 input_recording,
                 playback_response=bark is None,
                 response_format=None,
-                system_prompt=RobotChat("robot-chat.txt", personality=args.personality_context).prompt() if not args.use_local else None
+                system_prompt=RobotChat(script_path + "prompts/robot-chat.txt", personality=args.personality_context).prompt() if not args.use_local else None
             )
             if bark is not None:
                 bark.synthesize(response, load_model=True)
@@ -105,8 +106,8 @@ def handle_requests() -> None:
             print("\nGenerating commands ...")
             messages = json.loads(ros_commander.respond(
                 input_recording,
-                response_format="grammars/posestamped.json" if args.use_local else None, #NOTE: the restricted oai output doesn't seem to be wrapping the messages in an array correctly
-                system_prompt=ROSPublisher("ros-publisher.txt", environment=args.environment_context).prompt() if not args.use_local else None
+                response_format=script_path + "grammars/posestamped.json" if args.use_local else None, #NOTE: the restricted oai output doesn't seem to be wrapping the messages in an array correctly
+                system_prompt=ROSPublisher(script_path + "prompts/ros-publisher.txt", environment=args.environment_context).prompt() if not args.use_local else None
             ))
             print("\nDone")
 
@@ -149,6 +150,8 @@ if __name__ == "__main__":
 
     ros_client = roslibpy.Ros(host=args.ros_host, port=args.ros_port)
     ros_client.run()
+
+    script_path: str = str(os.path.realpath(__file__).rstrip(os.path.basename(__file__)))
 
     handle_requests()
 
