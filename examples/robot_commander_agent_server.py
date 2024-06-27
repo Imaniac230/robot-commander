@@ -22,10 +22,10 @@ def launch_agents() -> None:
         )),
         LlamaCPP(LLMParams(
             model_path=args.llm_model_file,
-            initial_prompt=ROSPublisher(script_path + 'prompts/ros-publisher.txt', environment=args.environment_context).prompt(),
+            initial_prompt=ROSPublisher(base_path + 'prompts/ros-publisher.txt', environment=args.environment_context).prompt(),
             n_of_tokens_to_predict=500,
             n_of_gpu_layers_to_offload=20,
-            json_schema_file_path=script_path + 'grammars/posestamped.json',
+            json_schema_file_path=base_path + 'grammars/posestamped.json',
             server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
             server_port=8081,
             n_of_parallel_server_requests=1
@@ -41,7 +41,7 @@ def launch_agents() -> None:
         )),
         LlamaCPP(LLMParams(
             model_path=args.llm_model_file,
-            initial_prompt=RobotChat(script_path + 'prompts/robot-chat.txt', personality=args.personality_context).prompt(),
+            initial_prompt=RobotChat(base_path + 'prompts/robot-chat.txt', personality=args.personality_context).prompt(),
             n_of_tokens_to_predict=50,
             n_of_gpu_layers_to_offload=20,
             server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
@@ -69,6 +69,6 @@ if __name__ == "__main__":
     parser.add_argument('--personality_context', type=str, default=None, help='Additional information about the agent personality.')
     args: argparse.Namespace = parser.parse_args()
 
-    script_path: str = str(os.path.realpath(__file__).rstrip(os.path.basename(__file__)))
+    base_path: str = str(os.path.realpath(__name__).rstrip(os.path.basename(__name__)))
 
     launch_agents()

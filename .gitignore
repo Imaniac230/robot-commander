@@ -2,9 +2,10 @@
 **.vscode**
 **.idea**
 
-robot-commander/build
-*.egg-info
-
 *.wav
 *.log
 *.png
+
+build
+install
+log

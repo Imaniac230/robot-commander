@@ -89,7 +89,7 @@ class BarkCPP(TTS):
     def __init__(self, params: TTSParams) -> None:
         super().__init__(params)
         # TODO(paths): find a more canonical way of handling this (env vars?, installation?)
-        self.library_path: str = str(os.path.realpath(__package__).rstrip(os.path.basename(__package__))) + 'robot-commander/libs/bark_cpp'
+        self.library_path: str = str(os.path.realpath(__package__).rstrip(os.path.basename(__package__))) + 'robot_commander/lib/libs/bark_cpp'
         self.bin_path: str = "build/examples"
         # TODO: check failures
         self.server_worker = th.Thread(target=sp.run, args=[self._build_command("server")])

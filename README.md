@@ -14,25 +14,13 @@ This project is currently developed to use the public openai API server requests
 
 ## Setup
 
-### ROS
-
-To integrate with ROS2, the current proof-of-concept examples simply utilize the `roslibpy` library together with `rosbridge`. In order to use all the current examples, you should install the following dependencies:
-```bash
-sudo apt install portaudio19-dev && pip install roslibpy pyaudio
-```
-
-and the ros bridge:
-```
-sudo apt install ros-<ros-distro>-rosbridge-suite
-```
-
 ### Local models
 
 #### Build
 
-To install the `robot-commander` project and install/build its main required libraries, run the setup script:
+To install the base `robot-commander-library` project and install/build its main dependency libraries, run the setup script:
 ```bash
-./robot-commander/setup.sh
+./setup.sh
 ```
 >NOTE: If you want to compile `llama.cpp` and `whisper.cpp` with different options, please refer to their respective instructions for more detailed compilation steps.
 
@@ -56,15 +44,15 @@ This project requires all models to be downloaded and/or quantized manually befo
    > Make sure that you have `git lfs` installed: `git lfs install`
 3. Use the `convert-pt-to-ggml.py` script from `whisper.cpp` to convert, ex:
    ```
-   python3 robot-commander/libs/whisper_cpp/models/convert-pt-to-ggml.py <path-to-downloaded-model-file>/large-v3.pt <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
+   python3 robot_commander/lib/libs/whisper_cpp/models/convert-pt-to-ggml.py <path-to-downloaded-model-file>/large-v3.pt <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
    ```
    > To convert the model downloaded from huggingface, use `convert-h5-to-ggml.py` instead, ex:
    > ```
-   > python3 robot-commander/libs/whisper_cpp/models/convert-h5-to-ggml.py <path-to-downloaded-model-files> <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
+   > python3 robot_commander/lib/libs/whisper_cpp/models/convert-h5-to-ggml.py <path-to-downloaded-model-files> <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
    > ```
 4. Quantize the converted model, ex.:
    ```
-   ./robot-commander/libs/whisper_cpp/build/bin/quantize <path-to-converted-file>/ggml-model-f16-large-v3.bin <path-to-quantized-file>/ggml-model-q4_0-large-v3.bin q4_0
+   ./robot_commander/lib/libs/whisper_cpp/build/bin/quantize <path-to-converted-file>/ggml-model-f16-large-v3.bin <path-to-quantized-file>/ggml-model-q4_0-large-v3.bin q4_0
    ```
 
  ***Llama3***
@@ -75,11 +63,11 @@ This project requires all models to be downloaded and/or quantized manually befo
    > Make sure that you have `git lfs` installed: `git lfs install`
 2. Use the `convert-hf-to-gguf.py` script from `llama.cpp` to convert, ex.:
    ```
-   python3 robot-commander/libs/llama_cpp/convert-hf-to-gguf.py <path-to-downloaded-model-files> --outtype f16
+   python3 robot_commander/lib/libs/llama_cpp/convert-hf-to-gguf.py <path-to-downloaded-model-files> --outtype f16
    ```
 3. Quantize the converted model, ex.:
    ```
-   ./robot-commander/libs/llama_cpp/build/bin/quantize <path-to-converted-file>/ggml-model-f16.gguf <path-to-quantized-file>/ggml-model-q4_0.gguf Q4_0
+   ./robot_commander/lib/libs/llama_cpp/build/bin/quantize <path-to-converted-file>/ggml-model-f16.gguf <path-to-quantized-file>/ggml-model-q4_0.gguf Q4_0
    ```
 
 ***Bark***
@@ -91,11 +79,11 @@ This project requires all models to be downloaded and/or quantized manually befo
 > NOTE: The GGML format and quantization for bark are currently only experimental. Use the full pytorch models if you want the best results.
 2. Use the `convert.py` script from `bark.cpp` to convert, ex.:
    ```
-   python3 robot-commander/libs/bark_cpp/convert.py --dir-model <path-to-downloaded-model-files> --use-f16 && mv <path-to-converted-file>/ggml_weights.bin <path-to-converted-file>/ggml-model-f16.bin
+   python3 robot_commander/lib/libs/bark_cpp/convert.py --dir-model <path-to-downloaded-model-files> --use-f16 && mv <path-to-converted-file>/ggml_weights.bin <path-to-converted-file>/ggml-model-f16.bin
    ```
 3. Quantize the converted model, ex.:
    ```
-   ./robot-commander/libs/bark_cpp/build/examples/quantize/quantize <path-to-converted-file>/ggml-model-f16.bin <path-to-quantized-file>/ggml-model-q4_0.bin q4_0
+   ./robot_commander/lib/libs/bark_cpp/build/examples/quantize/quantize <path-to-converted-file>/ggml-model-f16.bin <path-to-quantized-file>/ggml-model-q4_0.bin q4_0
    ```
 
 ### External API
@@ -106,22 +94,42 @@ export OPENAI_API_KEY=<secret-key>
 ```
 or use it directly when running the examples.
 
-## Usage
+### ROS
 
-You can use the current proof-of-concept examples to test out the application.
+1. Source ROS and build the main package:
+   ```
+   . /opt/ros/<ros-distro>/setup.bash && colcon build
+   ```
+2. Source the current package workspace:
+   ```bash
+   . install/setup.bash
+   ```
+
+Some of the proof-of-concept examples still utilize the `roslibpy` library together with `rosbridge`, so you should install the following dependencies as well:
+```bash
+sudo apt install portaudio19-dev && pip install roslibpy pyaudio
+```
+
+and the ros bridge:
+```
+sudo apt install ros-<ros-distro>-rosbridge-suite
+```
+
+## Usage
 
 ### Local models
 
 1. Specify your "keyword" contexts for the `PoseStamped` ROS message in `messages/contexts/posestamped.txt`.
-2. Launch the local agent server:
+2. Specify your agent parameters in `params/agent_params.yaml`.
+3. Launch the local agent server:
+   ```bash
+   ros2 launch robot_commander agent.launch.py
    ```
-   python3 robot_commander_agent_server.py --net_interface <network-interface-for-servers> --stt_model_file <path-to-quantized-whisper-model> --llm_model_file <path-to-quantized-llama3-model> --tts_model_file <path-to-quantized-bark-model>
+4. Start the ros-bridge server node:
+   ```bash
+   ros2 launch rosbridge_server rosbridge_websocket_launch.xml
    ```
-3. Start the ros-bridge server node:
-   ```
-   . /opt/ros/<ros-distro>/setup.bash && ros2 launch rosbridge_server rosbridge_websocket_launch.xml
-   ```
-4. Start the commander:
+5. Start the commander:
    ```
    SUNO_USE_SMALL_MODELS=True python3 robot_commander.py --use_local --ros_topic <ros-topic-name> --ros_message_type geometry_msgs/msg/PoseStamped --local_address <agent-server-hostname-or-ip-address> --pytorch_tts_model_path <path-to-pytorch-bark-model-files>
    ```
@@ -131,14 +139,14 @@ You can use the current proof-of-concept examples to test out the application.
    > ```
    > python3 robot_commander.py --use_local --ros_topic <ros-topic-name> --ros_message_type geometry_msgs/msg/PoseStamped --local_address <agent-server-hostname-or-ip-address>
    > ```
-5. Start providing voice commands in natural language.
+6. Start providing voice commands in natural language.
 
 ### External API
 
 1. Specify your "keyword" contexts for the `PoseStamped` ROS message in `messages/contexts/posestamped.txt`.
 2. Start the ros-bridge server node:
-   ```
-   . /opt/ros/<ros-distro>/setup.bash && ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+   ```bash
+   ros2 launch rosbridge_server rosbridge_websocket_launch.xml
    ```
 3. Start the commander:
    ```
