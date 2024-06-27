@@ -44,7 +44,7 @@ class WhisperCPP(STT):
     def __init__(self, params: STTParams) -> None:
         super().__init__(params)
         # TODO(paths): find a more canonical way of handling this (env vars?, installation?)
-        self.library_path: str = str(os.path.realpath(__package__).rstrip(os.path.basename(__package__))) + 'libs/whisper_cpp'
+        self.library_path: str = str(os.path.realpath(__package__).rstrip(os.path.basename(__package__))) + 'robot-commander/libs/whisper_cpp'
         self.bin_path: str = "build/bin"
         # TODO: check failures
         self.server_worker = th.Thread(target=sp.run, args=[self._build_command("server")])

@@ -32,9 +32,14 @@ cudaOptions="-DCMAKE_CUDA_ARCHITECTURES=native -DCMAKE_CUDA_COMPILER=/usr/local/
 
 barkPath="$(scriptRootDir)/libs/bark"
 
+robotCommanderPath="$(scriptRootDir)"
+
 
 echo -e "\nDownloading external libraries ...\n\n"
+pushd "$robotCommanderPath" || { echo "ERROR: Could not push into the '$robotCommanderPath' directory."; exit 1; }
 vcs import ./ < libraries.repos
+popd || { echo "ERROR: Could not pop out of the '$robotCommanderPath' directory."; exit 1; }
+echo -e "\nLibraries downloaded.\n"
 
 echo -e "\nBuilding llama.cpp ...\n\n"
 pushd "$llamaCppPath" || { echo "ERROR: Could not push into the '$llamaCppPath' directory."; exit 1; }
@@ -80,3 +85,9 @@ popd || { echo "ERROR: Could not pop out of the '$barkPath' directory."; exit 1;
 echo -e "\nBark installed successfully\n\n"
 
 echo -e "\nAll libraries built successfully.\n"
+
+echo -e "\nInstalling robot-commander\n\n"
+pushd "$robotCommanderPath" || { echo "ERROR: Could not push into the '$robotCommanderPath' directory."; exit 1; }
+pip install .
+popd || { echo "ERROR: Could not pop out of the '$robotCommanderPath' directory."; exit 1; }
+echo -e "\nrobot-commander installed successfully\n\n"
