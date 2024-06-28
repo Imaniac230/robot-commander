@@ -83,7 +83,6 @@ def handle_requests() -> None:
             response = chat_commander.respond(
                 input_recording,
                 playback_response=bark is None,
-                response_format=None,
                 system_prompt=RobotChat(script_path + "prompts/robot-chat.txt", personality=args.personality_context).prompt() if not args.use_local else None
             )
             if bark is not None:

@@ -1,0 +1,10 @@
+# Input prompt audio recording (for local models it should be a .wav file using 16kHz sampling rate).
+string recording_file
+---
+# Generated speech synthesis, if enabled.
+string speech_file
+# Generated text response.
+string text_response
+---
+# This is currently not fully specified and is not used.
+int64[] file_stream

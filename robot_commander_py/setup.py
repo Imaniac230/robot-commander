@@ -4,7 +4,7 @@ from pathlib import Path
 import os
 
 package_name = 'robot_commander'
-with open(Path(__file__).resolve().parent / 'README.md', encoding='utf-8') as f: long_description = f.read()
+with open(Path(__file__).resolve().parent.parent / 'README.md', encoding='utf-8') as f: long_description = f.read()
 
 setup(
     name=package_name,
@@ -35,6 +35,8 @@ setup(
         'console_scripts': [
             'test_node = robot_commander.test_node:main',
             'agent_node = robot_commander.agent_node:main',
+            'chat_commander_action_server = robot_commander.chat_commander_action_server:main',
+            'goal_commander_action_server = robot_commander.goal_commander_action_server:main',
         ],
     },
 )

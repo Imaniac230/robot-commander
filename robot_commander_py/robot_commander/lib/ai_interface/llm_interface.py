@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing_extensions import Self
 from typing import List, Optional,Dict
+from pathlib import Path
 
 from utils import Requestor
 
@@ -51,7 +52,10 @@ class LlamaCPP(LLM):
     def __init__(self, params: LLMParams) -> None:
         super().__init__(params)
         # TODO(paths): find a more canonical way of handling this (env vars?, installation?)
-        self.library_path: str = str(os.path.realpath(__package__).rstrip(os.path.basename(__package__))) + 'robot_commander/lib/libs/llama_cpp'
+        #__package__ -> /home/user/Work/ROS/github/local/robot-commander/ai_interface
+        #__name__ -> /home/user/Work/ROS/github/local/robot-commander/ai_interface.llm_interface
+        #__file__ -> /home/user/.local/lib/python3.8/site-packages/ai_interface/llm_interface.py
+        self.library_path: str = str(Path(__package__).resolve().parent) + '/robot_commander_py/robot_commander/lib/libs/llama_cpp'
         self.bin_path: str = "build/bin"
         # TODO: check failures
         self.server_worker = th.Thread(target=sp.run, args=[self._build_command("llama-server")])

@@ -2,6 +2,7 @@ from scipy.io.wavfile import write as write_wav
 from dataclasses import dataclass
 from typing_extensions import Self
 from typing import List, Any, Optional, Dict
+from pathlib import Path
 
 from bark import generate_audio, SAMPLE_RATE
 from bark.generation import generate_text_semantic
@@ -89,7 +90,10 @@ class BarkCPP(TTS):
     def __init__(self, params: TTSParams) -> None:
         super().__init__(params)
         # TODO(paths): find a more canonical way of handling this (env vars?, installation?)
-        self.library_path: str = str(os.path.realpath(__package__).rstrip(os.path.basename(__package__))) + 'robot_commander/lib/libs/bark_cpp'
+        #__package__ -> /home/user/Work/ROS/github/local/robot-commander/ai_interface
+        #__name__ -> /home/user/Work/ROS/github/local/robot-commander/ai_interface.tts_interface
+        #__file__ -> /home/user/.local/lib/python3.8/site-packages/ai_interface/tts_interface.py
+        self.library_path: str = str(Path(__package__).resolve().parent) + '/robot_commander_py/robot_commander/lib/libs/bark_cpp'
         self.bin_path: str = "build/examples"
         # TODO: check failures
         self.server_worker = th.Thread(target=sp.run, args=[self._build_command("server")])

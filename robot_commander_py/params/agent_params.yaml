@@ -1,7 +1,7 @@
 chat_agent:
   ros__parameters:
     type: CHAT
-    server_hostname: 192.168.0.220
+    server_hostname: 10.0.0.131
 
     speech_to_text:
       port: 8082
@@ -10,7 +10,7 @@ chat_agent:
     language_model:
       port: 8083
       model_file: /media/user/data_ssd/models/llama3/hf/Meta-Llama-3-8B-Instruct/ggml-model-q4_0.gguf
-      initial_prompt_file: prompts/robot-chat.txt
+      initial_prompt_file: robot_commander_py/prompts/robot-chat.txt
       initial_prompt_context: "You are Loki, the god of mischief. While you never fail to perform the given requests, you occasionally try to deceive the human. You always demonstrate your wit and cunning in your responses."
 
     text_to_speech:
@@ -21,7 +21,7 @@ chat_agent:
 ros_agent:
   ros__parameters:
     type: ROS
-    server_hostname: 192.168.0.220
+    server_hostname: 10.0.0.131
 
     speech_to_text:
       port: 8080
@@ -30,7 +30,7 @@ ros_agent:
     language_model:
       port: 8081
       model_file: /media/user/data_ssd/models/llama3/hf/Meta-Llama-3-8B-Instruct/ggml-model-q4_0.gguf
-      initial_prompt_file: prompts/ros-publisher.txt
+      initial_prompt_file: robot_commander_py/prompts/ros-publisher.txt
       initial_prompt_context: "You are located inside a university campus building, which contains several laboratories that you can explore."
 
     text_to_speech:

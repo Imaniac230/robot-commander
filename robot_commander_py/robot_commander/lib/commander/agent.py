@@ -34,19 +34,22 @@ class Agent:
 
 #TODO(ros): this example should be implemented as the main ROS node for this project and it shouldn't have to be limited only to python in any way,
 #   also expose all relevant parameters into the config
+# TODO(http-endpoints): We should create explicit wrappers for all supported providers (openai, anthropic, local *.cpp, and any other)
+#   that would always create and output the required endpoint and payload data formats implicitly. This would simplify the commander params
+#   and make the class respond method more generalizable and reusable instead of the currently hard-coded payload data formats.
 @dataclass
 class CommanderParams:
     stt_host: str
     stt_endpoint: str
     llm_host: str
     llm_endpoint: str
+    tts_generated_file: str = "output_response.wav"
     tts_host: Optional[str] = None
     tts_endpoint: Optional[str] = None
     tts_voice: Optional[str] = None
     stt_name: Optional[str] = None # currently valid only for the openai API
     llm_name: Optional[str] = None # currently valid only for the openai API
     tts_name: Optional[str] = None # currently valid only for the openai API
-    tts_generated_file: str = "output_response.wav"
     api_key: Optional[str] = None # currently valid only for the openai API
 
 class Commander:

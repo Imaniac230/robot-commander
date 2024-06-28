@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./robot_commander/lib/setup.sh
+./robot_commander_py/robot_commander/lib/setup.sh

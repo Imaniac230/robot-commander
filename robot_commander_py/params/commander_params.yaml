@@ -1,0 +1,43 @@
+chat_commander:
+  ros__parameters:
+    api_key: '' # FIXME(multi-api-keys): use the individual component keys instead
+
+    speech_to_text:
+      host: "http://10.0.0.131:8082"
+      api_key: '' # FIXME(multi-api-keys): this is currently not used
+      name: ''
+
+    language_model:
+      host: "http://10.0.0.131:8083"
+      api_key: '' # FIXME(multi-api-keys): this is currently not used
+      name: ''
+      # This is only required if requesting from external API servers
+      initial_prompt_file: robot_commander_py/prompts/robot-chat.txt
+      initial_prompt_context: "You are Loki, the god of mischief. While you never fail to perform the given requests, you occasionally try to deceive the human. You always demonstrate your wit and cunning in your responses."
+
+    text_to_speech:
+      host: "http://10.0.0.131:8084"
+      api_key: '' # FIXME(multi-api-keys): this is currently not used
+      name: ''
+      voice_type: 'en_speaker_1'
+      # TODO(tts-server): local tts server is only experimental for now, use the pytorch models for best results
+      pytorch_model_path: /media/user/data/models/bark/hf/bark/
+      use_pytorch: True
+
+goal_commander:
+  ros__parameters:
+    api_key: '' # FIXME(multi-api-keys): use the individual component keys instead
+
+    speech_to_text:
+      host: "http://10.0.0.131:8080"
+      api_key: '' # FIXME(multi-api-keys): this is currently not used
+      name: ''
+
+    language_model:
+      host: "http://10.0.0.131:8081"
+      api_key: '' # FIXME(multi-api-keys): this is currently not used
+      name: ''
+      grammar_file: robot_commander_py/grammars/posestamped.json
+      # This is only required if requesting from external API servers
+      initial_prompt_file: robot_commander_py/prompts/ros-publisher.txt
+      initial_prompt_context: "You are located inside a university campus building, which contains several laboratories that you can explore."
