@@ -121,9 +121,9 @@ sudo apt install ros-<ros-distro>-rosbridge-suite
 
 1. Specify your "keyword" contexts for the `PoseStamped` ROS message in `messages/contexts/posestamped.txt`.
 2. Specify your agent parameters in `params/agent_params.yaml`.
-3. Launch the local agent server:
+3. Launch the local agent servers:
    ```bash
-   ros2 launch robot_commander agent.launch.py
+   ros2 launch robot_commander agents.launch.py
    ```
 4. Start the ros-bridge server node:
    ```bash
