@@ -1,2 +1,49 @@
-commander:
+ros_commander:
   ros__parameters:
+    type: ROS
+
+    speech_to_text:
+      host: "192.168.0.220:8080"
+      api_key: ''
+      name: ''
+
+    language_model:
+      host: "192.168.0.220:8081"
+      api_key: ''
+      name: ''
+      grammar_file: grammars/posestamped.json
+      initial_prompt_file: prompts/ros-publisher.txt
+      initial_prompt_context: "You are located inside a university campus building, which contains several laboratories that you can explore."
+
+    text_to_speech:
+      host: ''
+      api_key: ''
+      name: ''
+      voice_type: ''
+      pytorch_model_path: ''
+      use_pytorch: False
+
+chat_commander:
+  ros__parameters:
+    type: CHAT
+
+    speech_to_text:
+      host: "192.168.0.220:8080"
+      api_key: ''
+      name: ''
+
+    language_model:
+      host: "192.168.0.220:8081"
+      api_key: ''
+      name: ''
+      grammar_file: ''
+      initial_prompt_file: prompts/robot-chat.txt
+      initial_prompt_context: "You are Loki, the god of mischief. While you never fail to perform the given requests, you occasionally try to deceive the human. You always demonstrate your wit and cunning in your responses."
+
+    text_to_speech:
+      host: "192.168.0.220:8082"
+      api_key: ''
+      name: ''
+      voice: 'en_speaker_1'
+      pytorch_model_path: /media/user/data/models/bark/hf/bark/
+      use_pytorch: True
