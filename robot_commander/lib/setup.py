@@ -1,6 +1,6 @@
 from setuptools import setup
 
-setup(name='robot-commander-library',
+setup(name='robot_commander_library',
       version='0.0.1',
       description='Library for interfacing with generative AI models for inference.',
       author='Tomas Horelican',
