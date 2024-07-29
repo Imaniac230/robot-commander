@@ -37,6 +37,7 @@ setup(
             'agent_node = robot_commander.agent_node:main',
             'chat_commander_action_server = robot_commander.chat_commander_action_server:main',
             'goal_commander_action_server = robot_commander.goal_commander_action_server:main',
+            'commander_action_client = robot_commander.commander_action_client:main',
         ],
     },
 )

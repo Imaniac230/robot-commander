@@ -54,16 +54,15 @@ def launch_setup(context: LaunchContext) -> Optional[List[LaunchDescriptionEntit
         parameters=[configured_params],
     )
 
-    #TODO(action-client): implement
-    # start_commander_action_client_node_cmd = Node(
-    #     package='robot_commander',
-    #     executable='commander_action_client',
-    #     name='commander',
-    #     namespace=namespace,
-    #     output='screen',
-    #     emulate_tty=True,
-    #     parameters=[configured_params],
-    # )
+    start_commander_action_client_node_cmd = Node(
+        package='robot_commander',
+        executable='commander_action_client',
+        name='commander',
+        namespace=namespace,
+        output='screen',
+        emulate_tty=True,
+        parameters=[],
+    )
 
     # Create the launch description and populate
     ld = LaunchDescription()
@@ -71,7 +70,7 @@ def launch_setup(context: LaunchContext) -> Optional[List[LaunchDescriptionEntit
     # Actions and Handlers
     ld.add_action(start_chat_commander_action_server_node_cmd)
     ld.add_action(start_goal_commander_action_server_node_cmd)
-    # ld.add_action(start_commander_action_client_node_cmd)
+    ld.add_action(start_commander_action_client_node_cmd)
 
     return [ld]
 
