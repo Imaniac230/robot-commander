@@ -1,16 +1,22 @@
-from commander import Commander, CommanderParams
-from ai_interface import Bark, TTSParams
-from utils import ROSPublisher, RobotChat
+from robot_commander_library.commander import Commander, CommanderParams
+from robot_commander_library.ai_interface import Bark, TTSParams
+from robot_commander_library.utils import ROSPublisher, RobotChat
 
 from pathlib import Path
 from typing import Optional
+from enum import Enum, unique
 
 from rclpy.node import Node
 
 
-class CommanderActionServerInterface(Node):
+@unique
+class AgentType(Enum):
+    CHAT = 1
+    ROS = 2
 
-    def __init__(self, name: str, is_chat: bool):
+
+class CommanderActionServerInterface(Node):
+    def __init__(self, name: str, agent_type: AgentType):
         super().__init__(name)
 
         self.declare_parameter('api_key', '')  # FIXME(multi-api-keys): use the individual component keys instead
@@ -22,11 +28,13 @@ class CommanderActionServerInterface(Node):
         self.declare_parameter('language_model.host', '')
         self.declare_parameter('language_model.api_key', '')
         self.declare_parameter('language_model.name', '')
-        if not is_chat: self.declare_parameter('language_model.grammar_file', '')
+        if agent_type == AgentType.ROS:
+            self.declare_parameter('language_model.grammar_file', '')
+            self.declare_parameter('language_model.ros_messages_path', '')
         self.declare_parameter('language_model.initial_prompt_file', '')
         self.declare_parameter('language_model.initial_prompt_context', '')
 
-        if is_chat:
+        if agent_type == AgentType.CHAT:
             self.declare_parameter('text_to_speech.host', '')
             self.declare_parameter('text_to_speech.api_key', '')
             self.declare_parameter('text_to_speech.name', '')
@@ -34,7 +42,7 @@ class CommanderActionServerInterface(Node):
             self.declare_parameter('text_to_speech.pytorch_model_path', '')
             self.declare_parameter('text_to_speech.use_pytorch', False)
 
-        self.is_chat: bool = is_chat
+        self.type: AgentType = agent_type
         self.commander: Optional[Commander] = None
 
         self.system_prompt: Optional[str] = None
@@ -48,7 +56,7 @@ class CommanderActionServerInterface(Node):
         if not llm_host: raise ValueError("Language-model host not provided.")
 
         tts_host: str = ""
-        if self.is_chat: tts_host = self.get_parameter('text_to_speech.host').get_parameter_value().string_value
+        if self.type == AgentType.CHAT: tts_host = self.get_parameter('text_to_speech.host').get_parameter_value().string_value
 
         # TODO(http-endpoints): We should create explicit wrappers for all supported providers (openai, anthropic, local *.cpp, and any other)
         #   that would always create and output the required endpoint and payload data formats implicitly. The wrappers could then be
@@ -64,12 +72,12 @@ class CommanderActionServerInterface(Node):
             llm_endpoint: str = "/v1/chat/completions"
 
         tts_endpoint: str = ""
-        if self.is_chat:
+        if self.type == AgentType.CHAT:
             # local server uses the same endpoint as openai
             # TODO(tts-server): local tts server is only experimental for now
             tts_endpoint = "/v1/audio/speech"
 
-        if not self.is_chat:
+        if self.type == AgentType.ROS:
             grammar_file: str = self.get_parameter('language_model.grammar_file').get_parameter_value().string_value
             if grammar_file and "openai" in llm_host.lower():
                 self.get_logger().info("Grammar/schema constraints are currently not required when accessing OpenAI models and will be ignored.")
@@ -83,13 +91,14 @@ class CommanderActionServerInterface(Node):
             llm_init_file: str = self.get_parameter('language_model.initial_prompt_file').get_parameter_value().string_value
             llm_context: str = self.get_parameter('language_model.initial_prompt_context').get_parameter_value().string_value
             if Path(llm_init_file).is_file():
-                self.system_prompt = RobotChat(
-                    llm_init_file,
-                    personality=llm_context if llm_context else None
-                ).prompt() if self.is_chat else ROSPublisher(
-                    llm_init_file,
-                    environment=llm_context if llm_context else None
-                ).prompt()
+                if self.type == AgentType.CHAT:
+                    self.system_prompt = RobotChat(llm_init_file, personality=llm_context if llm_context else None).prompt()
+                elif self.type == AgentType.ROS:
+                    ros_messages_dir: str = self.get_parameter('language_model.ros_messages_path').get_parameter_value().string_value
+                    if not ros_messages_dir or not Path(ros_messages_dir).is_dir(): self.get_logger().warn(f"Directory '{ros_messages_dir}' not found, ROS message definitions will not be specified.")
+                    self.system_prompt = ROSPublisher(llm_init_file, ros_messages_dir, environment=llm_context if llm_context else None).prompt()
+                else:
+                    self.get_logger.warn(f"Agent type '{self.type}' is not supported, a system prompt will not be created.")
             else:
                 self.get_logger().warning(f"External API language-model requires an initial prompt but file '{llm_init_file}' was not found.")
 
@@ -99,7 +108,7 @@ class CommanderActionServerInterface(Node):
 
         tts_name: str = ""
         tts_voice: str = ""
-        if self.is_chat:
+        if self.type == AgentType.CHAT:
             tts_name = self.get_parameter('text_to_speech.name').get_parameter_value().string_value
             tts_voice = self.get_parameter('text_to_speech.voice_type').get_parameter_value().string_value
 

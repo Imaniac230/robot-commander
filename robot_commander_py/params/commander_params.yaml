@@ -11,8 +11,9 @@ chat_commander:
       host: "http://10.0.0.131:8083"
       api_key: '' # FIXME(multi-api-keys): this is currently not used
       name: ''
-      # This is only required if requesting from external API servers
-      initial_prompt_file: robot_commander_py/prompts/robot-chat.txt
+      # This is only required if requesting from external API servers,
+      # which are not already initialized by this custom prompt.
+      initial_prompt_file: /home/user/Work/ROS/github/local/robot-commander/robot_commander_py/prompts/robot-chat.txt
       initial_prompt_context: "You are Loki, the god of mischief. While you never fail to perform the given requests, you occasionally try to deceive the human. You always demonstrate your wit and cunning in your responses."
 
     text_to_speech:
@@ -37,7 +38,9 @@ goal_commander:
       host: "http://10.0.0.131:8081"
       api_key: '' # FIXME(multi-api-keys): this is currently not used
       name: ''
-      grammar_file: robot_commander_py/grammars/posestamped.json
-      # This is only required if requesting from external API servers
-      initial_prompt_file: robot_commander_py/prompts/ros-publisher.txt
+      grammar_file: /home/user/Work/ROS/github/local/robot-commander/robot_commander_py/grammars/posestamped.json
+      # This is only required if requesting from external API servers,
+      # which are not already initialized by this custom prompt.
+      initial_prompt_file: /home/user/Work/ROS/github/local/robot-commander/robot_commander_py/prompts/ros-publisher.txt
+      ros_messages_path: /home/user/Work/ROS/github/local/robot-commander/robot_commander_py/messages/
       initial_prompt_context: "You are located inside a university campus building, which contains several laboratories that you can explore."

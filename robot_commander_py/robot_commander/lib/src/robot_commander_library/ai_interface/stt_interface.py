@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from typing_extensions import Self
 from typing import List, Optional, Dict
-from pathlib import Path
 
-from utils import Requestor
+from robot_commander_library.utils import Requestor
 
 import subprocess as sp
 import threading as th
@@ -44,11 +43,9 @@ class WhisperCPP(STT):
     # We shouldn't attempt to do anything like that here.
     def __init__(self, params: STTParams) -> None:
         super().__init__(params)
-        # TODO(paths): find a more canonical way of handling this (env vars?, installation?)
-        #__package__ -> /home/user/Work/ROS/github/local/robot-commander/ai_interface
-        #__name__ -> /home/user/Work/ROS/github/local/robot-commander/ai_interface.stt_interface
-        #__file__ -> /home/user/.local/lib/python3.8/site-packages/ai_interface/stt_interface.py
-        self.library_path: str = str(Path(__package__).resolve().parent) + '/robot_commander_py/robot_commander/lib/libs/whisper_cpp'
+        #TODO(bin-path): decide if we want to support installed bins as well
+        self.library_path: str = os.getenv("ROBOT_COMMANDER_WHISPER_CPP_PATH", "")
+        if not self.library_path: raise EnvironmentError("Required variable ROBOT_COMMANDER_WHISPER_CPP_PATH was not found.")
         self.bin_path: str = "build/bin"
         # TODO: check failures
         self.server_worker = th.Thread(target=sp.run, args=[self._build_command("server")])

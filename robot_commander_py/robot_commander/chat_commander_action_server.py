@@ -1,4 +1,4 @@
-from robot_commander import CommanderActionServerInterface
+from robot_commander import CommanderActionServerInterface, AgentType
 from robot_commander_interfaces.action import Respond
 
 from pathlib import Path
@@ -10,7 +10,7 @@ from rclpy.action import ActionServer
 class ChatCommander(CommanderActionServerInterface):
 
     def __init__(self):
-        super().__init__('chat_commander', is_chat=True)
+        super().__init__('chat_commander', agent_type=AgentType.CHAT)
 
         self.initialize()
 
@@ -24,7 +24,9 @@ class ChatCommander(CommanderActionServerInterface):
         try:
             # TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
             self.commander.respond(goal_handle.request.recording_file, system_prompt=self.system_prompt)
-            if self.pytorch_tts is not None: self.pytorch_tts.synthesize(self.commander.last_response, load_model=True)
+            if self.pytorch_tts is not None:
+                self.get_logger().warn("Loading a non-server pytorch TTS model for response synthesis ...")
+                self.pytorch_tts.synthesize(self.commander.last_response, load_model=True)
         except Exception as e:
             self.get_logger().error(f"Failed to get response from agent, error: '{e}'")
             goal_handle.abort()
@@ -39,7 +41,7 @@ class ChatCommander(CommanderActionServerInterface):
 
         goal_handle.succeed()
         result = Respond.Result()
-        #TODO(chat-response): the action client will have to find the actual file, so it must currently run on the same machine,
+        # TODO(chat-response): the action client will have to find the actual file, so it must currently run on the same machine,
         # think if it would be useful to pass the generated audio stream instead
         # (we will have to verify that the data format is compatible across all possible use cases)
         result.speech_file = str(Path().resolve() / output_file)

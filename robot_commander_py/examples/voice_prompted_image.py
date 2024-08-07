@@ -1,5 +1,5 @@
 import threading as th
-from ai_interface import openai_interface as oai
+from robot_commander_library.ai_interface import openai_interface as oai
 
 
 def voice_prompted_image():

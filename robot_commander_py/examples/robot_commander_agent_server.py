@@ -1,6 +1,6 @@
-from ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, BarkCPP, TTSParams
-from commander import Agent
-from utils import ROSPublisher, RobotChat
+from robot_commander_library.ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, BarkCPP, TTSParams
+from robot_commander_library.commander import Agent
+from robot_commander_library.utils import ROSPublisher, RobotChat
 
 import netifaces as ni
 import argparse
@@ -22,7 +22,7 @@ def launch_agents() -> None:
         )),
         LlamaCPP(LLMParams(
             model_path=args.llm_model_file,
-            initial_prompt=ROSPublisher(base_path + 'prompts/ros-publisher.txt', environment=args.environment_context).prompt(),
+            initial_prompt=ROSPublisher(base_path + 'prompts/ros-publisher.txt', base_path + 'messages', environment=args.environment_context).prompt(),
             n_of_tokens_to_predict=500,
             n_of_gpu_layers_to_offload=20,
             json_schema_file_path=base_path + 'grammars/posestamped.json',

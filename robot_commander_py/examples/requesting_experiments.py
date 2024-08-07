@@ -1,4 +1,4 @@
-from utils import Requestor
+from robot_commander_library.utils import Requestor
 import sounddevice as sd
 import soundfile as sf
 import argparse
@@ -69,7 +69,7 @@ def local_chat(prompt: str) -> None:
     # print(f'{result}')
 
 def local_bark() -> None:
-    from ai_interface import Bark, TTSParams
+    from robot_commander_library.ai_interface import Bark, TTSParams
     # prompt: str = "[smirks] Ah, the box, you say? Well, I'm afraid it's not that simple. You see, I've misplaced it... or rather, I've cleverly hidden it from prying eyes. [winks]"
     # prompt: str = "[laughs] Ah, mortal, you want me to do your bidding, do you? Very well, I shall condescend to retrieve the door. But don't think for a moment that I'll be opening it for just anyone. [s"
     # prompt: str = "[laughs] Ah, mortal, you want me to do your bidding, do you?"

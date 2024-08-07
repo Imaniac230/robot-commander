@@ -34,7 +34,7 @@ class OpenAI:
         self.speech_voice: str = params.speech_voice
 
     def transcribe(self, key: Key = Key.f10) -> str:
-        from utils import Recorder
+        from robot_commander_library.utils import Recorder
         # FIXME(recording): make it inline instead of this crappy file saving
         with Recorder() as r:
             r.hold_to_record(key)

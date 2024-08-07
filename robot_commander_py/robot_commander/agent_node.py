@@ -1,6 +1,6 @@
-from ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, BarkCPP, TTSParams
-from commander import Agent
-from utils import ROSPublisher, RobotChat
+from robot_commander_library.ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, BarkCPP, TTSParams
+from robot_commander_library.commander import Agent
+from robot_commander_library.utils import ROSPublisher, RobotChat
 
 import netifaces as ni
 from typing import Optional
@@ -16,6 +16,7 @@ class AgentServer(Node):
         super().__init__('agent_server')
 
         self.declare_parameter('type', 'CHAT')
+        is_ros: bool = self.get_parameter('type').get_parameter_value().string_value == 'ROS'
         self.declare_parameter('server_hostname', '')
 
         self.declare_parameter('speech_to_text.port', 8080)
@@ -23,6 +24,7 @@ class AgentServer(Node):
 
         self.declare_parameter('language_model.port', 8081)
         self.declare_parameter('language_model.model_file', '')
+        if is_ros: self.declare_parameter('language_model.ros_messages_path', '')
         self.declare_parameter('language_model.initial_prompt_file', '')
         self.declare_parameter('language_model.initial_prompt_context', '')
 
@@ -52,7 +54,9 @@ class AgentServer(Node):
                 llm_init = RobotChat(llm_init_file, personality=llm_context if llm_context else None).prompt()
                 llm_max_tokens = 50
             elif agent_type == "ROS":
-                llm_init = ROSPublisher(llm_init_file, environment=llm_context if llm_context else None).prompt()
+                ros_messages_dir: str = self.get_parameter('language_model.ros_messages_path').get_parameter_value().string_value
+                if not ros_messages_dir or not Path(ros_messages_dir).is_dir(): self.get_logger().warn(f"Directory '{ros_messages_dir}' not found, ROS message definitions will not be specified.")
+                llm_init = ROSPublisher(llm_init_file, ros_messages_dir, environment=llm_context if llm_context else None).prompt()
                 llm_max_tokens = 500
             else:
                 self.get_logger().warning(f"Unsupported agent type: '{agent_type}'. Using an empty initial prompt.")

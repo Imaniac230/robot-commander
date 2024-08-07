@@ -2,13 +2,12 @@ from scipy.io.wavfile import write as write_wav
 from dataclasses import dataclass
 from typing_extensions import Self
 from typing import List, Any, Optional, Dict
-from pathlib import Path
 
 from bark import generate_audio, SAMPLE_RATE
 from bark.generation import generate_text_semantic
 from bark.api import semantic_to_waveform
 
-from utils import Requestor
+from robot_commander_library.utils import Requestor
 
 import sounddevice as sd
 import soundfile as sf
@@ -89,11 +88,9 @@ class Bark(TTS):
 class BarkCPP(TTS):
     def __init__(self, params: TTSParams) -> None:
         super().__init__(params)
-        # TODO(paths): find a more canonical way of handling this (env vars?, installation?)
-        #__package__ -> /home/user/Work/ROS/github/local/robot-commander/ai_interface
-        #__name__ -> /home/user/Work/ROS/github/local/robot-commander/ai_interface.tts_interface
-        #__file__ -> /home/user/.local/lib/python3.8/site-packages/ai_interface/tts_interface.py
-        self.library_path: str = str(Path(__package__).resolve().parent) + '/robot_commander_py/robot_commander/lib/libs/bark_cpp'
+        #TODO(bin-path): decide if we want to support installed bins as well
+        self.library_path: str = os.getenv("ROBOT_COMMANDER_BARK_CPP_PATH", "")
+        if not self.library_path: raise EnvironmentError("Required variable ROBOT_COMMANDER_BARK_CPP_PATH was not found.")
         self.bin_path: str = "build/examples"
         # TODO: check failures
         self.server_worker = th.Thread(target=sp.run, args=[self._build_command("server")])

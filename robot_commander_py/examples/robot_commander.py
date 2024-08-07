@@ -1,6 +1,6 @@
-from utils import Recorder, ROSPublisher, RobotChat
-from commander import Commander, CommanderParams
-from ai_interface import Bark, TTSParams
+from robot_commander_library.utils import Recorder, ROSPublisher, RobotChat
+from robot_commander_library.commander import Commander, CommanderParams
+from robot_commander_library.ai_interface import Bark, TTSParams
 from pynput.keyboard import Key
 from typing import Optional
 
@@ -106,7 +106,7 @@ def handle_requests() -> None:
             messages = json.loads(ros_commander.respond(
                 input_recording,
                 response_format=base_path + "grammars/posestamped.json" if args.use_local else None, #NOTE: the restricted oai output doesn't seem to be wrapping the messages in an array correctly
-                system_prompt=ROSPublisher(base_path + "prompts/ros-publisher.txt", environment=args.environment_context).prompt() if not args.use_local else None
+                system_prompt=ROSPublisher(base_path + "prompts/ros-publisher.txt", base_path + "messages", environment=args.environment_context).prompt() if not args.use_local else None
             ))
             print("\nDone")
 

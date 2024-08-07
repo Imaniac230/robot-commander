@@ -1,4 +1,5 @@
 from typing import Optional
+from pathlib import Path
 import glob
 import os
 
@@ -23,17 +24,18 @@ class RobotChat(SystemPrompt):
 
 
 class ROSPublisher(SystemPrompt):
-    def __init__(self, file_path: str, environment: Optional[str] = None) -> None:
+    def __init__(self, file_path: str, messages_directory: str, environment: Optional[str] = None) -> None:
         super().__init__(file_path)
         messages = ""
-        for file in glob.glob("messages/*.json"):
-            messages += "<" + os.path.basename(file).split('.')[0] + ">\n"
-            with open(file, 'r') as rd: messages += rd.read()
-            messages += "\n</" + os.path.basename(file).split('.')[0] + ">\n"
-
         contexts = ""
-        for file in glob.glob("messages/contexts/*.txt"):
-            with open(file, 'r') as rd: contexts += rd.read() + "\n"
+        if messages_directory and Path(messages_directory).is_dir():
+            for file in glob.glob(str(Path(messages_directory).resolve()) + "/*.json"):
+                messages += "<" + os.path.basename(file).split('.')[0] + ">\n"
+                with open(file, 'r') as rd: messages += rd.read()
+                messages += "\n</" + os.path.basename(file).split('.')[0] + ">\n"
+
+            for file in glob.glob(str(Path(messages_directory).resolve()) + "/contexts/*.txt"):
+                with open(file, 'r') as rd: contexts += rd.read() + "\n"
 
         if int(os.getenv("DEBUG", "0")) >= 1:
             print(f"messages:\n{messages}")

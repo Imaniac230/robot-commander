@@ -1,9 +1,9 @@
 from typing import Optional, Any
 from typing_extensions import Self
 from dataclasses import dataclass
-from utils import Requestor
+from robot_commander_library.utils import Requestor
 
-import ai_interface as ai
+import robot_commander_library.ai_interface as ai
 import sounddevice as sd
 import soundfile as sf
 import json

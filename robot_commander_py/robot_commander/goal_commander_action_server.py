@@ -1,4 +1,4 @@
-from robot_commander import CommanderActionServerInterface
+from robot_commander import CommanderActionServerInterface, AgentType
 from robot_commander_interfaces.action import Respond
 
 import json
@@ -12,7 +12,7 @@ from geometry_msgs.msg import PoseStamped
 class GoalCommander(CommanderActionServerInterface):
 
     def __init__(self):
-        super().__init__('goal_commander', is_chat=False)
+        super().__init__('goal_commander', agent_type=AgentType.ROS)
 
         self.initialize()
 

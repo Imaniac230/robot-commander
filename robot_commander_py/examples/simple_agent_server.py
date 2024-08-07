@@ -1,5 +1,5 @@
-from commander import Agent
-from ai_interface import WhisperCPP, STTParams, LlamaCPP, LLMParams, BarkCPP, TTSParams
+from robot_commander_library.commander import Agent
+from robot_commander_library.ai_interface import WhisperCPP, STTParams, LlamaCPP, LLMParams, BarkCPP, TTSParams
 import netifaces as ni
 import argparse
 

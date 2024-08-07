@@ -20,13 +20,13 @@ done
 buildDirectory="build"
 
 llamaCppPath="$(scriptRootDir)/libs/llama_cpp"
-llamaCppOptions="-DLLAMA_CUDA=$useCuda -DLLAMA_CUDA_F16=$useCuda -DLLAMA_NATIVE=ON -DLLAMA_AVX512=OFF"
+llamaCppOptions="-DGGML_CUDA=$useCuda -DGGML_CUDA_F16=$useCuda -DGGML_NATIVE=ON -DGGML_AVX512=OFF"
 
 whisperCppPath="$(scriptRootDir)/libs/whisper_cpp"
 whisperCppOptions="-DWHISPER_CUDA=$useCuda -DGGML_CUDA_F16=$useCuda -DWHISPER_NO_AVX512=ON"
 
 barkCppPath="$(scriptRootDir)/libs/bark_cpp"
-barkCppOptions="-DGGML_CUBLAS=$useCuda"
+barkCppOptions="-DGGML_CUBLAS=$useCuda -DGGML_CUDA_F16=$useCuda -DGGML_AVX512=OFF"
 
 cudaOptions="-DCMAKE_CUDA_ARCHITECTURES=native -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc"
 
@@ -37,7 +37,7 @@ robotCommanderPath="$(scriptRootDir)"
 
 echo -e "\nDownloading external libraries ...\n\n"
 pushd "$robotCommanderPath" || { echo "ERROR: Could not push into the '$robotCommanderPath' directory."; exit 1; }
-vcs import ./ < libraries.repos
+vcs import ./ < libraries.repos || { echo "Failed to download external all libraries !"; exit 1; }
 popd || { echo "ERROR: Could not pop out of the '$robotCommanderPath' directory."; exit 1; }
 echo -e "\nLibraries downloaded.\n"
 
@@ -78,16 +78,34 @@ cmake .. -G Ninja $barkCppOptions $cudaOptions -DCMAKE_BUILD_TYPE=Release && nin
 popd || { echo "ERROR: Could not pop out of the '$barkCppPath' directory."; exit 1; }
 echo -e "\nbark.cpp built successfully.\n"
 
-echo -e "\nInstalling Bark\n\n"
+echo -e "\nInstalling python Bark\n\n"
 pushd "$barkPath" || { echo "ERROR: Could not push into the '$barkPath' directory."; exit 1; }
-pip install .
+pip install . || { echo "Failed to install Bark !"; exit 1; }
 popd || { echo "ERROR: Could not pop out of the '$barkPath' directory."; exit 1; }
 echo -e "\nBark installed successfully\n\n"
 
+echo -e "\nInstalling python robot-commander-library\n\n"
+pushd "$robotCommanderPath" || { echo "ERROR: Could not push into the '$robotCommanderPath' directory."; exit 1; }
+pip install . || { echo "Failed to install robot-commander-library !"; exit 1; }
+popd || { echo "ERROR: Could not pop out of the '$robotCommanderPath' directory."; exit 1; }
+echo -e "\nrobot-commander-library installed successfully\n\n"
+
 echo -e "\nAll libraries built successfully.\n"
 
-echo -e "\nInstalling robot-commander\n\n"
-pushd "$robotCommanderPath" || { echo "ERROR: Could not push into the '$robotCommanderPath' directory."; exit 1; }
-pip install .
-popd || { echo "ERROR: Could not pop out of the '$robotCommanderPath' directory."; exit 1; }
-echo -e "\nrobot-commander installed successfully\n\n"
+echo -e "\nSetting up paths\n\n"
+# set_path_variable() "variable-name" "path"
+function set_path_variable() {
+ if grep -Fq "$1" ~/.bashrc; then
+   # always replace whole path, escape all '/' characters in path with '\' for sed
+   sed -i "/$1=/s/$1=[^\n]*/$1=${2//\//\\/}/" ~/.bashrc
+ else
+   echo "export $1=$2" >> ~/.bashrc
+ fi
+}
+
+cp ~/.bashrc /tmp/
+set_path_variable ROBOT_COMMANDER_LLAMA_CPP_PATH "$llamaCppPath"
+set_path_variable ROBOT_COMMANDER_WHISPER_CPP_PATH "$whisperCppPath"
+set_path_variable ROBOT_COMMANDER_BARK_CPP_PATH "$barkCppPath"
+echo -e "Paths added to '~/.bashrc':\n<     original\n---\n>     new"
+diff -s /tmp/.bashrc ~/.bashrc

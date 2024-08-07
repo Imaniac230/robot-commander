@@ -20,7 +20,7 @@ def local_model_factory() -> Dict[str, str]:
 
 
 def init_factory() -> Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]]:
-    from utils import ROSPublisher, RobotChat
+    from robot_commander_library.utils import ROSPublisher, RobotChat
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--load_models', action='store_true', default=False, help='Load models for each prompt instead of spawning servers.')
@@ -35,11 +35,11 @@ def init_factory() -> Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]]:
     ros = roslibpy.Ros(host=args.ros_host, port=args.ros_port)
     ros.run()
 
-    return args, ros, dict(chat=RobotChat(base_path + 'prompts/robot-chat.txt').prompt(), ros=ROSPublisher(base_path + 'prompts/ros-publisher.txt').prompt())
+    return args, ros, dict(chat=RobotChat(base_path + 'prompts/robot-chat.txt').prompt(), ros=ROSPublisher(base_path + 'prompts/ros-publisher.txt', base_path + 'messages').prompt())
 
 
 def openai_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]]) -> None:
-    from ai_interface import OpenAI, OpenAIParams
+    from robot_commander_library.ai_interface import OpenAI, OpenAIParams
 
     args: argparse.Namespace = system_init[0]
     ros_client: roslibpy.Ros = system_init[1]
@@ -96,10 +96,10 @@ def openai_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str
 
 
 def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str, str]], model_init: Dict[str, str]) -> None:
-    from utils import Recorder
-    from ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, Bark, BarkCPP, TTSParams
+    from robot_commander_library.utils import Recorder
+    from robot_commander_library.ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, Bark, BarkCPP, TTSParams
+    from robot_commander_library.commander import Agent
     from pynput.keyboard import Key
-    from commander import Agent
     import netifaces as ni
 
     args: argparse.Namespace = system_init[0]
