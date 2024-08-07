@@ -113,10 +113,10 @@ class CommanderActionClient(Node):
         chat_action_goal_future.add_done_callback(self.chat_response_callback)
         self.chat_result = ActionResult(GoalStatus.STATUS_EXECUTING)
 
-        self.get_logger().info(f"Waiting for chat response  ...")
+        self.get_logger().info("Waiting for chat response  ...")
         while self.chat_result.status == GoalStatus.STATUS_EXECUTING: pass
         if self.chat_result.status == GoalStatus.STATUS_SUCCEEDED:
-            self.get_logger().info(f"Playing back chat response ...")
+            self.get_logger().info("Starting chat response audio playback ...")
             data, rate = sf.read(self.chat_result.result.speech_file)
             sd.wait()
             sd.play(data, rate, blocking=False)
@@ -126,6 +126,9 @@ class CommanderActionClient(Node):
         goal_action_goal_future = self._goal_action_client.send_goal_async(goal_msg)
         goal_action_goal_future.add_done_callback(self.goal_response_callback)
         self.goal_result = ActionResult(GoalStatus.STATUS_EXECUTING)
+
+        sd.wait()
+        self.get_logger().info("Chat response audio playback finished.")
 
     def recording_callback(self, msg):
         self.is_recording.store(int(msg.data))
