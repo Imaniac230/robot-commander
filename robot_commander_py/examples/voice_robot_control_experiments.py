@@ -1,9 +1,9 @@
 from typing import Tuple, Dict
+from pathlib import Path
 
 import argparse
 import time
 import roslibpy
-import os
 import json
 
 
@@ -214,7 +214,7 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
 
 
 if __name__ == '__main__':
-    base_path: str = str(os.path.realpath(__name__).rstrip(os.path.basename(__name__)))
+    base_path: str = str(Path(__file__).resolve().parent.parent.parent) + '/'
 
     # openai_example(init_factory())
     local_example(init_factory(), local_model_factory())

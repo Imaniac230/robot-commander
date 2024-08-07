@@ -93,7 +93,7 @@ This project requires all models to be downloaded and/or quantized manually befo
 
 ### ROS
 
-1. Source ROS and build the main package:
+1. Source ROS and build the packages:
    ```
    . /opt/ros/<ros-distro>/setup.bash && colcon build
    ```
@@ -108,7 +108,7 @@ This project requires all models to be downloaded and/or quantized manually befo
 2. Specify your commander parameters in `params/commander_params.yaml`.
 3. Launch the ROS commanders:
    ```bash
-   SUNO_USE_SMALL_MODELS=True ros2 launch robot_commander commanders.launch.py
+   SUNO_USE_SMALL_MODELS=True ros2 launch robot_commander_py commanders.launch.py
    ```
    > The local raw pytorch Bark implementation will attempt to use CUDA by default, if you want run it on CPU only, also specify `SUNO_OFFLOAD_CPU=True`. If you have enough memory to hold the full Bark models, you can disable the `SUNO_USE_SMALL_MODELS` option. Please refer to the [Bark](https://github.com/suno-ai/bark?tab=readme-ov-file#how-much-vram-do-i-need) README for more details.
 
@@ -122,7 +122,7 @@ To launch the locally hosted agent servers:
 2. Specify your agent parameters in `params/agent_params.yaml`.
 3. Launch the local agent servers:
    ```bash
-   ros2 launch robot_commander agents.launch.py
+   ros2 launch robot_commander_py agents.launch.py
    ```
 
 ## Results

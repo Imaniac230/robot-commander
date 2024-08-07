@@ -35,7 +35,7 @@ def launch_setup(context: LaunchContext) -> Optional[List[LaunchDescriptionEntit
 
     # Actions - nodes
     start_chat_agent_server_node_cmd = Node(
-        package='robot_commander',
+        package='robot_commander_py',
         executable='agent_node',
         name='chat_agent',
         namespace=namespace,
@@ -45,7 +45,7 @@ def launch_setup(context: LaunchContext) -> Optional[List[LaunchDescriptionEntit
     )
 
     start_ros_agent_server_node_cmd = Node(
-        package='robot_commander',
+        package='robot_commander_py',
         executable='agent_node',
         name='ros_agent',
         namespace=namespace,
@@ -66,7 +66,7 @@ def launch_setup(context: LaunchContext) -> Optional[List[LaunchDescriptionEntit
 
 def generate_launch_description():
     # Get the necessary directories
-    commander_dir = get_package_share_directory('robot_commander')
+    commander_dir = get_package_share_directory('robot_commander_py')
 
     return LaunchDescription([
         # Declare the launch arguments

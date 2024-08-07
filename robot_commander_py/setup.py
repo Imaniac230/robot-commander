@@ -3,7 +3,7 @@ from glob import glob
 from pathlib import Path
 import os
 
-package_name = 'robot_commander'
+package_name = 'robot_commander_py'
 with open(Path(__file__).resolve().parent.parent / 'README.md', encoding='utf-8') as f: long_description = f.read()
 
 setup(
@@ -22,8 +22,7 @@ setup(
         "License :: MIT License"
     ],
     data_files=[
-        ('share/ament_index/resource_index/packages',
-         ['resource/' + package_name]),
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
         (os.path.join('share', package_name, 'params'), glob(os.path.join('params', '*.yaml'))),
@@ -33,11 +32,11 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'test_node = robot_commander.test_node:main',
-            'agent_node = robot_commander.agent_node:main',
-            'chat_commander_action_server = robot_commander.chat_commander_action_server:main',
-            'goal_commander_action_server = robot_commander.goal_commander_action_server:main',
-            'commander_action_client = robot_commander.commander_action_client:main',
+            'test_node = ' + package_name + '.test_node:main',
+            'agent_node = ' + package_name + '.agent_node:main',
+            'chat_commander_action_server = ' + package_name + '.chat_commander_action_server:main',
+            'goal_commander_action_server = ' + package_name + '.goal_commander_action_server:main',
+            'commander_action_client = ' + package_name + '.commander_action_client:main',
         ],
     },
 )

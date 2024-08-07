@@ -3,12 +3,12 @@ from robot_commander_library.commander import Commander, CommanderParams
 from robot_commander_library.ai_interface import Bark, TTSParams
 from pynput.keyboard import Key
 from typing import Optional
+from pathlib import Path
 
 import argparse
 import json
 import roslibpy
 import time
-import os
 
 
 #TODO(ros): this example should be implemented as the main ROS node for this project and it shouldn't have to be limited only to python in any way,
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     ros_client = roslibpy.Ros(host=args.ros_host, port=args.ros_port)
     ros_client.run()
 
-    base_path: str = str(os.path.realpath(__name__).rstrip(os.path.basename(__name__)))
+    base_path: str = str(Path(__file__).resolve().parent.parent.parent) + '/'
 
     handle_requests()
 

@@ -1,10 +1,10 @@
 from robot_commander_library.ai_interface import LlamaCPP, LLMParams, WhisperCPP, STTParams, BarkCPP, TTSParams
 from robot_commander_library.commander import Agent
 from robot_commander_library.utils import ROSPublisher, RobotChat
+from pathlib import Path
 
 import netifaces as ni
 import argparse
-import os
 
 
 #TODO(ros): we can wrap this into a Python ros node and also expose all relevant parameters into the config,
@@ -69,6 +69,6 @@ if __name__ == "__main__":
     parser.add_argument('--personality_context', type=str, default=None, help='Additional information about the agent personality.')
     args: argparse.Namespace = parser.parse_args()
 
-    base_path: str = str(os.path.realpath(__name__).rstrip(os.path.basename(__name__)))
+    base_path: str = str(Path(__file__).resolve().parent.parent.parent) + '/'
 
     launch_agents()

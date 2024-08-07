@@ -1,4 +1,4 @@
-from robot_commander import CommanderActionServerInterface, AgentType
+from robot_commander_py import CommanderActionServerInterface, AgentType
 from robot_commander_interfaces.action import Respond
 
 from pathlib import Path
