@@ -1,92 +1,91 @@
 {
   "type": "array",
-  "items": [
-    {
-      "type": "object",
-      "properties": {
-        "header": {
-          "type": "object",
-          "properties": {
-            "stamp": {
-              "type": "object",
-              "properties": {
-                "sec": {
-                  "type": "integer"
-                },
-                "nanosec": {
-                  "type": "integer"
-                }
+  "items": {
+    "type": "object",
+    "properties": {
+      "header": {
+        "type": "object",
+        "properties": {
+          "stamp": {
+            "type": "object",
+            "properties": {
+              "sec": {
+                "type": "integer"
               },
-              "required": [
-                "sec",
-                "nanosec"
-              ]
+              "nanosec": {
+                "type": "integer"
+              }
             },
-            "frame_id": {
-              "type": "string"
-            }
+            "required": [
+              "sec",
+              "nanosec"
+            ]
           },
-          "required": [
-            "stamp",
-            "frame_id"
-          ]
+          "frame_id": {
+            "type": "string"
+          }
         },
-        "pose": {
-          "type": "object",
-          "properties": {
-            "position": {
-              "type": "object",
-              "properties": {
-                "x": {
-                  "type": "number"
-                },
-                "y": {
-                  "type": "number"
-                },
-                "z": {
-                  "type": "number"
-                }
-              },
-              "required": [
-                "x",
-                "y",
-                "z"
-              ]
-            },
-            "orientation": {
-              "type": "object",
-              "properties": {
-                "x": {
-                  "type": "number"
-                },
-                "y": {
-                  "type": "number"
-                },
-                "z": {
-                  "type": "number"
-                },
-                "w": {
-                  "type": "number"
-                }
-              },
-              "required": [
-                "x",
-                "y",
-                "z",
-                "w"
-              ]
-            }
-          },
-          "required": [
-            "position",
-            "orientation"
-          ]
-        }
+        "required": [
+          "stamp",
+          "frame_id"
+        ]
       },
-      "required": [
-        "header",
-        "pose"
-      ]
-    }
-  ]
+      "pose": {
+        "type": "object",
+        "properties": {
+          "position": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "z": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z"
+            ]
+          },
+          "orientation": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "z": {
+                "type": "number"
+              },
+              "w": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z",
+              "w"
+            ]
+          }
+        },
+        "required": [
+          "position",
+          "orientation"
+        ]
+      }
+    },
+    "required": [
+      "header",
+      "pose"
+    ]
+  },
+  "minItems": 0
 }
