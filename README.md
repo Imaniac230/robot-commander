@@ -14,6 +14,8 @@ This project is currently developed to use the public openai API server requests
 
 ## Setup
 
+### Build
+
 1. Install dependencies:
    ```bash
    sudo apt install ninja-build portaudio19-dev
@@ -22,19 +24,16 @@ This project is currently developed to use the public openai API server requests
    ```bash
    git clone https://github.com/Imaniac230/robot-commander.git && cd robot-commander/
    ```
-
-#### Build
-
-1. Source ROS and build the packages:
+3. Source ROS and build the packages:
    ```
    . /opt/ros/<ros-distro>/setup.bash && colcon build
    ```
-2. This project relies on the independent `robot_commander_library` package located in `library_vendor_py/`.  The other external projects listed in `library_vendor_cpp/libraries.repos` and `library_vendor_py/libraries.repos` are required for usage with local models only (if you're only going to make request to external servers, you only need `robot_commander_library`). Building implicitly with the `colcon` ROS interface is not yet implemented, and they must all be built and/or installed manually. For convenience, you can use the setup script, which will perform all the installation steps with pre-defined options:
+4. This project relies on the independent `robot_commander_library` package located in `library_vendor_py/`.  The other external projects listed in `library_vendor_cpp/libraries.repos` and `library_vendor_py/libraries.repos` are required for usage with local models only (if you're only going to make request to external servers, you only need `robot_commander_library`). Building implicitly with the `colcon` ROS interface is not yet implemented, and they must all be built and/or installed manually. For convenience, you can use the setup script, which will perform all the installation steps with pre-defined options:
    ```bash
    ./setup.sh
    ```
    >NOTE: This will download all external dependencies, compile the cpp projects with predefined options, and install the python projects locally. If you want to compile `llama.cpp` and `whisper.cpp` with different options, please refer to their respective instructions for more detailed compilation steps. Exporting environment variables `ROBOT_COMMANDER_WHISPER_CPP_PATH`, `ROBOT_COMMANDER_LLAMA_CPP_PATH`, and `ROBOT_COMMANDER_BARK_CPP_PATH` will also be setup in `environment.sh`.
-3. Source the current ROS workspace and the custom environment variables:
+5. Source the current ROS workspace and the custom environment variables:
    ```bash
    . install/setup.bash && . environment.sh
    ```
