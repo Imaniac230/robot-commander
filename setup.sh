@@ -41,7 +41,7 @@ robotCommanderPath="$py_vendor_path/robot_commander_library"
 
 echo -e "\nInstalling python robot-commander-library\n\n"
 pushd "$robotCommanderPath" || { echo "ERROR: Could not push into the '$robotCommanderPath' directory."; exit 1; }
-pip install --user -e . || { echo "Failed to install robot-commander-library !"; exit 1; }
+pip install . || { echo "Failed to install robot-commander-library !"; exit 1; }
 popd || { echo "ERROR: Could not pop out of the '$robotCommanderPath' directory."; exit 1; }
 echo -e "\nrobot-commander-library installed successfully\n\n"
 
@@ -89,7 +89,7 @@ echo -e "\nbark.cpp built successfully.\n"
 
 echo -e "\nInstalling python Bark\n\n"
 pushd "$barkPath" || { echo "ERROR: Could not push into the '$barkPath' directory."; exit 1; }
-pip install --user -e . || { echo "Failed to install Bark !"; exit 1; }
+pip install . || { echo "Failed to install Bark !"; exit 1; }
 popd || { echo "ERROR: Could not pop out of the '$barkPath' directory."; exit 1; }
 echo -e "\nBark installed successfully\n\n"
 

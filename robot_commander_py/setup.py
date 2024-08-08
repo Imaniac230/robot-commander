@@ -27,7 +27,22 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
         (os.path.join('share', package_name, 'params'), glob(os.path.join('params', '*.yaml'))),
     ],
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        # 'glob',
+        'pathlib',
+        # 'os',
+        'netifaces',
+        'typing',
+        # 'enum',
+        'sounddevice',
+        'soundfile',
+        # 'threading',
+        'atomics',
+        'asyncio',
+        # 'json',
+        # 'time'
+    ],
     zip_safe=True,
     tests_require=['pytest'],
     entry_points={

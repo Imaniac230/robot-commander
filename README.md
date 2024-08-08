@@ -16,17 +16,18 @@ This project is currently developed to use the public openai API server requests
 
 ### Build
 
-1. Install dependencies:
+1. Install system dependencies:
    ```bash
    sudo apt install ninja-build portaudio19-dev
    ```
+   >NOTE: Also make sure you have installed ROS and the following dependencies: `python3-colcon-common-extensions`, `python3-rosdep`, and `python3-vcstool`.
 2. Download:
    ```bash
    git clone https://github.com/Imaniac230/robot-commander.git && cd robot-commander/
    ```
 3. Source ROS and build the packages:
    ```
-   . /opt/ros/<ros-distro>/setup.bash && colcon build
+   . /opt/ros/<ros-distro>/setup.bash && rosdep install --from-paths . --ignore-src -r -y && colcon build
    ```
 4. This project relies on the independent `robot_commander_library` package located in `library_vendor_py/`.  The other external projects listed in `library_vendor_cpp/libraries.repos` and `library_vendor_py/libraries.repos` are required for usage with local models only (if you're only going to make request to external servers, you only need `robot_commander_library`). Building implicitly with the `colcon` ROS interface is not yet implemented, and they must all be built and/or installed manually. For convenience, you can use the setup script, which will perform all the installation steps with pre-defined options:
    ```bash

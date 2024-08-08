@@ -2,10 +2,12 @@ from setuptools import setup
 from setuptools.command.build import build
 import logging
 
+
 class BuildMessage(build):
     def run(self):
         logging.log(logging.WARN, "\nThis package currently does nothing, please install all dependencies manually using 'pip' or use the 'setup.sh' script.\n")
         build.run(self)
+
 
 package_name = 'library_vendor_py'
 
