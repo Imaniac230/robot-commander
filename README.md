@@ -33,8 +33,8 @@ This project is currently developed to use the public openai API server requests
    ```bash
    ./library_vendor_manual_setup.sh
    ```
-   >NOTE: This will download all external dependencies, compile the cpp projects with predefined options, and install the python projects locally. If you want to compile `llama.cpp` and `whisper.cpp` with different options, please refer to their respective instructions for more detailed compilation steps. Exporting custom environment variables `ROBOT_COMMANDER_WHISPER_CPP_PATH`, `ROBOT_COMMANDER_LLAMA_CPP_PATH`, and `ROBOT_COMMANDER_BARK_CPP_PATH` will also be set up in `environment.sh`.
-5. Source the current ROS workspace and the custom environment variables:
+   >NOTE: This will download all external dependencies, compile the cpp projects with predefined options, and install the python projects locally. If you want to compile `llama.cpp` and `whisper.cpp` with different options, please refer to their respective instructions for more detailed compilation steps. This will also create an `environment.sh` file, which defines exports of additional environment variables `ROBOT_COMMANDER_WHISPER_CPP_PATH`, `ROBOT_COMMANDER_LLAMA_CPP_PATH`, `ROBOT_COMMANDER_BARK_CPP_PATH`, and `SUNO_OFFLOAD_CPU`.
+5. Source the current ROS workspace and the additional customized environment:
    ```bash
    . install/setup.bash && . environment.sh
    ```
