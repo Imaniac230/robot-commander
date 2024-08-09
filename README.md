@@ -21,17 +21,17 @@ This project is currently developed to use the public openai API server requests
    sudo apt install ninja-build portaudio19-dev
    ```
    >NOTE: Also make sure you have installed ROS and the following dependencies: `python3-colcon-common-extensions`, `python3-rosdep`, and `python3-vcstool`.
-2. Download:
+2. Download this repo and update ROS dependencies:
+   ```
+   git clone https://github.com/Imaniac230/robot-commander.git && . /opt/ros/<ros-distro>/setup.bash && rosdep install --from-paths robot-commander/ --ignore-src -r -y
+   ```
+3. Build the packages:
    ```bash
-   git clone https://github.com/Imaniac230/robot-commander.git && cd robot-commander/
-   ```
-3. Source ROS and build the packages:
-   ```
-   . /opt/ros/<ros-distro>/setup.bash && rosdep install --from-paths . --ignore-src -r -y && colcon build
+    cd robot-commander/ && colcon build
    ```
 4. This project relies on the independent `robot_commander_library` package located in `library_vendor_py/`.  The other external projects listed in `library_vendor_cpp/libraries.repos` and `library_vendor_py/libraries.repos` are required for usage with local models only (if you're only going to make request to external servers, you only need `robot_commander_library`). Building implicitly with the `colcon` ROS interface is not yet implemented, and they must all be built and/or installed manually. For convenience, you can use the setup script, which will perform all the installation steps with pre-defined options:
    ```bash
-   ./setup.sh
+   ./library_vendor_manual_setup.sh
    ```
    >NOTE: This will download all external dependencies, compile the cpp projects with predefined options, and install the python projects locally. If you want to compile `llama.cpp` and `whisper.cpp` with different options, please refer to their respective instructions for more detailed compilation steps. Exporting environment variables `ROBOT_COMMANDER_WHISPER_CPP_PATH`, `ROBOT_COMMANDER_LLAMA_CPP_PATH`, and `ROBOT_COMMANDER_BARK_CPP_PATH` will also be setup in `environment.sh`.
 5. Source the current ROS workspace and the custom environment variables:

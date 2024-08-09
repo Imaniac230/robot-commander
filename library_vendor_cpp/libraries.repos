@@ -2,7 +2,7 @@ repositories:
   llama_cpp:
     type: git
     url: https://github.com/ggerganov/llama.cpp.git
-    version: b3541
+    version: b3556
   whisper_cpp:
     type: git
     url: https://github.com/ggerganov/whisper.cpp.git
