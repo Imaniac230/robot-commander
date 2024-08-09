@@ -6,12 +6,22 @@ function scriptRootDir() {
   echo "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 }
 
+# set_variable() "name" "value"
+function set_variable() {
+ if grep -Fq "$1" environment.sh; then
+   # always replace whole value, escape all '/' characters in a path with '\' for sed
+   sed -i "/$1=/s/$1=[^\n]*/$1=${2//\//\\/}/" environment.sh
+ else
+   echo "export $1=$2" >> environment.sh
+ fi
+}
+
 #FIXME(setup): Integrate all the external project dependency building and installing with the colcon build process
 # so that we can get rid of this script completely.
 
 useCuda=""
 while [[ $useCuda != "OFF" ]] && [[ $useCuda != "ON" ]]; do
-  read -rp "Attempt to build llama.cpp and whisper.cpp with CUDA support? [y/n] " useCuda
+  read -rp "Allow libraries to attempt to use CUDA support? [y/n] " useCuda
   useCuda=$(echo "$useCuda" | tr '[:upper:]' '[:lower:]')
   if [[ $useCuda == "n" ]] || [[ $useCuda == "no" ]]; then
     useCuda="OFF"
@@ -95,23 +105,18 @@ echo -e "\nBark installed successfully\n\n"
 
 echo -e "\nAll libraries built successfully.\n"
 
-echo -e "\nSetting up paths\n\n"
-# set_path_variable() "variable-name" "path"
-function set_path_variable() {
- if grep -Fq "$1" environment.sh; then
-   # always replace whole path, escape all '/' characters in path with '\' for sed
-   sed -i "/$1=/s/$1=[^\n]*/$1=${2//\//\\/}/" environment.sh
- else
-   echo "export $1=$2" >> environment.sh
- fi
-}
-
+echo -e "\nSetting up custom environment\n\n"
 pushd "$(scriptRootDir)" || { echo "ERROR: Could not push into the '$(scriptRootDir)' directory."; exit 1; }
 if ! [ -f environment.sh ]; then touch environment.sh; fi
 cp environment.sh /tmp/
-set_path_variable ROBOT_COMMANDER_LLAMA_CPP_PATH "$llamaCppPath"
-set_path_variable ROBOT_COMMANDER_WHISPER_CPP_PATH "$whisperCppPath"
-set_path_variable ROBOT_COMMANDER_BARK_CPP_PATH "$barkCppPath"
-echo -e "Paths added to 'environment.sh':\n<     original\n---\n>     new"
+set_variable ROBOT_COMMANDER_LLAMA_CPP_PATH "$llamaCppPath"
+set_variable ROBOT_COMMANDER_WHISPER_CPP_PATH "$whisperCppPath"
+set_variable ROBOT_COMMANDER_BARK_CPP_PATH "$barkCppPath"
+if [[ $useCuda == "ON" ]]; then
+  set_variable SUNO_OFFLOAD_CPU "False"
+else
+  set_variable SUNO_OFFLOAD_CPU "True"
+fi
+echo -e "Variables added to 'environment.sh':\n<     original\n---\n>     new"
 diff -s /tmp/environment.sh environment.sh
 popd || { echo "ERROR: Could not pop out of the '$(scriptRootDir)' directory."; exit 1; }

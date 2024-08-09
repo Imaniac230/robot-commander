@@ -33,7 +33,7 @@ This project is currently developed to use the public openai API server requests
    ```bash
    ./library_vendor_manual_setup.sh
    ```
-   >NOTE: This will download all external dependencies, compile the cpp projects with predefined options, and install the python projects locally. If you want to compile `llama.cpp` and `whisper.cpp` with different options, please refer to their respective instructions for more detailed compilation steps. Exporting environment variables `ROBOT_COMMANDER_WHISPER_CPP_PATH`, `ROBOT_COMMANDER_LLAMA_CPP_PATH`, and `ROBOT_COMMANDER_BARK_CPP_PATH` will also be setup in `environment.sh`.
+   >NOTE: This will download all external dependencies, compile the cpp projects with predefined options, and install the python projects locally. If you want to compile `llama.cpp` and `whisper.cpp` with different options, please refer to their respective instructions for more detailed compilation steps. Exporting custom environment variables `ROBOT_COMMANDER_WHISPER_CPP_PATH`, `ROBOT_COMMANDER_LLAMA_CPP_PATH`, and `ROBOT_COMMANDER_BARK_CPP_PATH` will also be set up in `environment.sh`.
 5. Source the current ROS workspace and the custom environment variables:
    ```bash
    . install/setup.bash && . environment.sh
@@ -111,7 +111,7 @@ This project requires all models to be downloaded and/or quantized manually befo
    ```bash
    SUNO_USE_SMALL_MODELS=True ros2 launch robot_commander_py commanders.launch.py
    ```
-   > The local raw pytorch Bark implementation will attempt to use CUDA by default, if you want run it on CPU only, also specify `SUNO_OFFLOAD_CPU=True`. If you have enough memory to hold the full Bark models, you can disable the `SUNO_USE_SMALL_MODELS` option. Please refer to the [Bark](https://github.com/suno-ai/bark?tab=readme-ov-file#how-much-vram-do-i-need) README for more details.
+   > If you have enough memory to hold the full Bark models, you can disable the `SUNO_USE_SMALL_MODELS` option. Please refer to the [Bark](https://github.com/suno-ai/bark?tab=readme-ov-file#how-much-vram-do-i-need) README for more details.
 
    > NOTE: Local quantized Bark TTS agent server is currently only experimental. For best results, use the raw pytorch models, which do not support a server mode, and must be loaded dynamically for each request. To use the TTS server host, disable the `use_pytorch` parameter for the chat commander `text_to_speech` section.
 4. Start providing voice commands in natural language using a "push-to-talk" interface exposed through the `/record_prompt` topic.
