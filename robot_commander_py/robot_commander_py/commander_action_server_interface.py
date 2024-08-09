@@ -19,8 +19,6 @@ class CommanderActionServerInterface(Node):
     def __init__(self, name: str, agent_type: AgentType):
         super().__init__(name)
 
-        self.declare_parameter('api_key', '')  # FIXME(multi-api-keys): use the individual component keys instead
-
         self.declare_parameter('speech_to_text.host', '')
         self.declare_parameter('speech_to_text.api_key', '')
         self.declare_parameter('speech_to_text.name', '')
@@ -57,6 +55,18 @@ class CommanderActionServerInterface(Node):
 
         tts_host: str = ""
         if self.type == AgentType.CHAT: tts_host = self.get_parameter('text_to_speech.host').get_parameter_value().string_value
+
+        stt_api_key: str = self.get_parameter('speech_to_text.api_key').get_parameter_value().string_value
+        if any(service in stt_host.lower() for service in ["openai", "anthropic"]):
+            if not stt_api_key: raise ValueError(f"External speech-to-text host '{stt_host}' requires an API key, but no key was specified.")
+        llm_api_key: str = self.get_parameter('language_model.api_key').get_parameter_value().string_value
+        if any(service in llm_host.lower() for service in ["openai", "anthropic"]):
+            if not llm_api_key: raise ValueError(f"External language-model host '{llm_host}' requires an API key, but no key was specified.")
+        tts_api_key: str = ""
+        if self.type == AgentType.CHAT:
+            tts_api_key = self.get_parameter('text_to_speech.api_key').get_parameter_value().string_value
+            if any(service in tts_host.lower() for service in ["openai", "anthropic"]):
+                if not tts_api_key: raise ValueError(f"External text-to-speech host '{tts_host}' requires an API key, but no key was specified.")
 
         # TODO(http-endpoints): We should create explicit wrappers for all supported providers (openai, anthropic, local *.cpp, and any other)
         #   that would always create and output the required endpoint and payload data formats implicitly. The wrappers could then be
@@ -102,7 +112,6 @@ class CommanderActionServerInterface(Node):
             else:
                 self.get_logger().warning(f"External API language-model requires an initial prompt but file '{llm_init_file}' was not found.")
 
-        api_key: str = self.get_parameter('api_key').get_parameter_value().string_value
         stt_name: str = self.get_parameter('speech_to_text.name').get_parameter_value().string_value
         llm_name: str = self.get_parameter('language_model.name').get_parameter_value().string_value
 
@@ -120,15 +129,16 @@ class CommanderActionServerInterface(Node):
         self.commander = Commander(
             CommanderParams(
                 stt_host=stt_host,
+                stt_api_key=stt_api_key if stt_api_key else None,
                 stt_endpoint=stt_endpoint,
                 stt_name=stt_name if stt_name else None,
                 llm_host=llm_host,
+                llm_api_key=llm_api_key if llm_api_key else None,
                 llm_endpoint=llm_endpoint,
                 llm_name=llm_name if llm_name else None,
                 tts_host=tts_host if tts_host and self.pytorch_tts is None else None,
+                tts_api_key=tts_api_key if tts_api_key else None,
                 tts_endpoint=tts_endpoint if tts_host else None,
                 tts_voice=tts_voice if tts_voice else None,
-                tts_name=tts_name if tts_name else None,
-                # FIXME(multi-api-keys): refactor commander to take separate keys for each part?
-                api_key=api_key if api_key else None
+                tts_name=tts_name if tts_name else None
             ))

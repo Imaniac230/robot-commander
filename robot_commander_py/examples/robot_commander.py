@@ -41,26 +41,29 @@ def handle_requests() -> None:
         chat_commander = Commander(
             CommanderParams(
                 stt_host="https://api.openai.com",
+                stt_api_key=args.api_key,
                 stt_endpoint="/v1/audio/translations",
                 stt_name="whisper-1",
                 llm_host="https://api.openai.com",
+                llm_api_key=args.api_key,
                 llm_endpoint="/v1/chat/completions",
                 llm_name="gpt-4o",
                 tts_host="https://api.openai.com",
+                tts_api_key=args.api_key,
                 tts_endpoint="/v1/audio/speech",
                 tts_voice=args.chat_voice if args.chat_voice is not None else "fable",
-                tts_name="tts-1",
-                api_key=args.api_key
+                tts_name="tts-1"
         ))
         ros_commander = Commander(
             CommanderParams(
                 stt_host="https://api.openai.com",
+                stt_api_key=args.api_key,
                 stt_endpoint="/v1/audio/translations",
                 stt_name="whisper-1",
                 llm_host="https://api.openai.com",
+                llm_api_key=args.api_key,
                 llm_endpoint="/v1/chat/completions",
-                llm_name="gpt-4o",
-                api_key=args.api_key
+                llm_name="gpt-4o"
         ))
 
     while True:

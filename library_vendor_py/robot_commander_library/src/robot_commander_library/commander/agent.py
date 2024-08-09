@@ -50,7 +50,9 @@ class CommanderParams:
     stt_name: Optional[str] = None # currently valid only for the openai API
     llm_name: Optional[str] = None # currently valid only for the openai API
     tts_name: Optional[str] = None # currently valid only for the openai API
-    api_key: Optional[str] = None # currently valid only for the openai API
+    stt_api_key: Optional[str] = None # currently valid only for the openai API
+    llm_api_key: Optional[str] = None # currently valid only for the openai API
+    tts_api_key: Optional[str] = None # currently valid only for the openai API
 
 class Commander:
     def __init__(self, params: CommanderParams) -> None:
@@ -63,7 +65,7 @@ class Commander:
     def respond(self, audio_file: str, playback_response: bool = False, response_format: Optional[str] = None, system_prompt: Optional[str] = None) -> Any:
         file_payload = {"file": (audio_file, open(audio_file, mode="rb"), "audio/x-wav")}
         data_payload = {"model": self.params.stt_name} if self.params.stt_name is not None else None
-        transcription = Requestor(self.params.stt_host, api_key=self.params.api_key).transcribe(self.params.stt_endpoint, file_payload, data_payload)
+        transcription = Requestor(self.params.stt_host, api_key=self.params.stt_api_key).transcribe(self.params.stt_endpoint, file_payload, data_payload)
         if transcription is None:
             print("Failed to get transcription from STT.")
             self.last_transcription = ""
@@ -79,7 +81,7 @@ class Commander:
         if response_format is not None:
             with open(response_format, 'r') as sch: json_payload["response_format"] = {"type": "json_object", "schema": json.load(sch)}
         if self.params.llm_name is not None: json_payload["model"] = self.params.llm_name
-        response = Requestor(self.params.llm_host, api_key=self.params.api_key).respond(self.params.llm_endpoint, json_payload)
+        response = Requestor(self.params.llm_host, api_key=self.params.llm_api_key).respond(self.params.llm_endpoint, json_payload)
         if response is None:
             print("Failed to get response from LLM.")
             self.last_response = ""
@@ -95,7 +97,7 @@ class Commander:
         #FIXME(tts-server): this only supports oai API, test with bark_cpp server once ready
         json_payload = {"input": self.last_response, "voice": self.params.tts_voice, "response_format": "wav"}
         if self.params.tts_name is not None: json_payload["model"] = self.params.tts_name
-        synthesis = Requestor(self.params.tts_host, api_key=self.params.api_key).synthesize(self.params.tts_endpoint, json_payload)
+        synthesis = Requestor(self.params.tts_host, api_key=self.params.tts_api_key).synthesize(self.params.tts_endpoint, json_payload)
         if synthesis is None:
             print("Failed to get synthesis from TTS.")
             self.last_synthesis = None
