@@ -9,9 +9,11 @@ chat_agent:
 
     language_model:
       port: 8083
-      model_file: /media/user/data_ssd/models/llama3/hf/Meta-Llama-3-8B-Instruct/ggml-model-q4_0.gguf
+      model_file: /media/user/data_ssd/models/llama3/hf/Meta-Llama-3.1-8B-Instruct/ggml-model-q4_0.gguf
       initial_prompt_file: /home/user/Work/ROS/github/local/robot-commander/prompts/robot-chat.txt
       initial_prompt_context: "You are Loki, the god of mischief. While you never fail to perform the given requests, you occasionally try to deceive the human. You always demonstrate your wit and cunning in your responses."
+      max_output_tokens: 50
+      gpu_offload_layers: 20
 
     text_to_speech:
       port: 8084 # TODO(tts-server): local tts server is only experimental for now
@@ -29,10 +31,12 @@ ros_agent:
 
     language_model:
       port: 8081
-      model_file: /media/user/data_ssd/models/llama3/hf/Meta-Llama-3-8B-Instruct/ggml-model-q4_0.gguf
+      model_file: /media/user/data_ssd/models/llama3/hf/Meta-Llama-3.1-8B-Instruct/ggml-model-q4_0.gguf
       initial_prompt_file: /home/user/Work/ROS/github/local/robot-commander/prompts/ros-publisher.txt
       ros_messages_path: /home/user/Work/ROS/github/local/robot-commander/messages/
       initial_prompt_context: "You are located inside a university campus building, which contains several laboratories that you can explore."
+      max_output_tokens: 500
+      gpu_offload_layers: 20
 
     text_to_speech:
       port: ''

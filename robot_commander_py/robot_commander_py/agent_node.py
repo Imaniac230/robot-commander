@@ -27,6 +27,8 @@ class AgentServer(Node):
         if is_ros: self.declare_parameter('language_model.ros_messages_path', '')
         self.declare_parameter('language_model.initial_prompt_file', '')
         self.declare_parameter('language_model.initial_prompt_context', '')
+        self.declare_parameter('language_model.max_output_tokens', -1)
+        self.declare_parameter('language_model.gpu_offload_layers', 0)
 
         self.declare_parameter('text_to_speech.port', 8082)
         self.declare_parameter('text_to_speech.model_file', '')
@@ -47,17 +49,21 @@ class AgentServer(Node):
         agent_type: str = self.get_parameter('type').get_parameter_value().string_value
         llm_init_file: str = self.get_parameter('language_model.initial_prompt_file').get_parameter_value().string_value
         llm_context: str = self.get_parameter('language_model.initial_prompt_context').get_parameter_value().string_value
+
+        llm_max_tokens: int = self.get_parameter('language_model.max_output_tokens').get_parameter_value().integer_value
+        # -2 -> until context filled, -1 -> infinite
+        if llm_max_tokens < -2:
+            self.get_logger().warning(f"Invalid language model 'max_output_tokens' value specified: {llm_max_tokens}, defaulting to -1 (unlimited).")
+            llm_max_tokens = -1
+
         llm_init: str = ""
-        llm_max_tokens: int = -1
         if Path(llm_init_file).is_file():
             if agent_type == "CHAT":
                 llm_init = RobotChat(llm_init_file, personality=llm_context if llm_context else None).prompt()
-                llm_max_tokens = 50
             elif agent_type == "ROS":
                 ros_messages_dir: str = self.get_parameter('language_model.ros_messages_path').get_parameter_value().string_value
                 if not ros_messages_dir or not Path(ros_messages_dir).is_dir(): self.get_logger().warn(f"Directory '{ros_messages_dir}' not found, ROS message definitions will not be specified.")
                 llm_init = ROSPublisher(llm_init_file, ros_messages_dir, environment=llm_context if llm_context else None).prompt()
-                llm_max_tokens = 500
             else:
                 self.get_logger().warning(f"Unsupported agent type: '{agent_type}'. Using an empty initial prompt.")
         else:
@@ -67,6 +73,11 @@ class AgentServer(Node):
         if not hostname:
             hostname = ni.ifaddresses('lo')[ni.AF_INET][0]['addr']
             self.get_logger().warning(f"Server hostname was not provided, using local interface address: {hostname}.")
+
+        llm_gpu_layers: int = self.get_parameter('language_model.gpu_offload_layers').get_parameter_value().integer_value
+        if llm_gpu_layers < 0:
+            self.get_logger().warning(f"Invalid number of language model GPU layers for offloading: {llm_gpu_layers}, defaulting to 0.")
+            llm_gpu_layers = 0
 
         self.agent = Agent(
             WhisperCPP(STTParams(
@@ -79,7 +90,7 @@ class AgentServer(Node):
                 model_path=llm,
                 initial_prompt=llm_init,
                 n_of_tokens_to_predict=llm_max_tokens,
-                n_of_gpu_layers_to_offload=20,  # FIXME(gpu): this should be configured externally
+                n_of_gpu_layers_to_offload=llm_gpu_layers,
                 server_hostname=hostname,
                 server_port=self.get_parameter('language_model.port').get_parameter_value().integer_value,
                 n_of_parallel_server_requests=1
