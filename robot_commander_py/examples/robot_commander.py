@@ -1,5 +1,5 @@
-from robot_commander_library.utils import Recorder, ROSPublisher, RobotChat
-from robot_commander_library.commander import Commander, CommanderParams
+from robot_commander_library.utils import Recorder, ROSPublisher, RobotChat, HostProvider, HostProviderParams
+from robot_commander_library.commander import Commander
 from robot_commander_library.ai_interface import Bark, TTSParams
 from pynput.keyboard import Key
 from typing import Optional
@@ -11,60 +11,58 @@ import roslibpy
 import time
 
 
-#TODO(ros): this example should be implemented as the main ROS node for this project and it shouldn't have to be limited only to python in any way,
+# TODO(ros): this example should be implemented as the main ROS node for this project and it shouldn't have to be limited only to python in any way,
 #   also expose all relevant parameters into the config
 def handle_requests() -> None:
-    #TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
+    # TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
     bark: Optional[Bark] = None
     if args.pytorch_tts_model_path is not None: bark = Bark(TTSParams(model_path=args.pytorch_tts_model_path, voice=args.chat_voice if args.chat_voice is not None else "announcer"))
 
     input_recording: str = base_path + "input_recording.wav"
     if args.use_local:
         chat_commander = Commander(
-            CommanderParams(
-                stt_host="http://" + args.local_address + ":8082",
-                stt_endpoint="/inference",
-                llm_host="http://" + args.local_address + ":8083",
-                llm_endpoint="/v1/chat/completions",
-                tts_host="http://" + args.local_address + ":8084" if args.pytorch_tts_model_path is None else None,
-                tts_endpoint="/v1/audio/speech" if args.pytorch_tts_model_path is None else None,
-                tts_voice=args.chat_voice if args.chat_voice is not None else "announcer"
-        ))
+            HostProvider(
+                HostProviderParams(
+                    stt_host="http://" + args.local_address + ":8082",
+                    llm_host="http://" + args.local_address + ":8083",
+                    tts_host="http://" + args.local_address + ":8084" if args.pytorch_tts_model_path is None else None,
+                    tts_voice=args.chat_voice if args.chat_voice is not None else "announcer"
+        )))
         ros_commander = Commander(
-            CommanderParams(
-                stt_host="http://" + args.local_address + ":8080",
-                stt_endpoint="/inference",
-                llm_host="http://" + args.local_address + ":8081",
-                llm_endpoint="/v1/chat/completions",
-        ))
+            HostProvider(
+                HostProviderParams(
+                    stt_host="http://" + args.local_address + ":8080",
+                    llm_host="http://" + args.local_address + ":8081",
+                    llm_json_schema_file=base_path + "grammars/posestamped.json"
+        )))
     else:
         chat_commander = Commander(
-            CommanderParams(
-                stt_host="https://api.openai.com",
-                stt_api_key=args.api_key,
-                stt_endpoint="/v1/audio/translations",
-                stt_name="whisper-1",
-                llm_host="https://api.openai.com",
-                llm_api_key=args.api_key,
-                llm_endpoint="/v1/chat/completions",
-                llm_name="gpt-4o",
-                tts_host="https://api.openai.com",
-                tts_api_key=args.api_key,
-                tts_endpoint="/v1/audio/speech",
-                tts_voice=args.chat_voice if args.chat_voice is not None else "fable",
-                tts_name="tts-1"
-        ))
+            HostProvider(
+                HostProviderParams(
+                    stt_host="https://api.openai.com",
+                    stt_api_key=args.api_key,
+                    stt_name="whisper-1",
+                    llm_host="https://api.openai.com",
+                    llm_api_key=args.api_key,
+                    llm_name="gpt-4o",
+                    llm_system_prompt=RobotChat(base_path + "prompts/robot-chat.txt", personality=args.personality_context).prompt(),
+                    tts_host="https://api.openai.com",
+                    tts_api_key=args.api_key,
+                    tts_voice=args.chat_voice if args.chat_voice is not None else "fable",
+                    tts_name="tts-1"
+        )))
         ros_commander = Commander(
-            CommanderParams(
-                stt_host="https://api.openai.com",
-                stt_api_key=args.api_key,
-                stt_endpoint="/v1/audio/translations",
-                stt_name="whisper-1",
-                llm_host="https://api.openai.com",
-                llm_api_key=args.api_key,
-                llm_endpoint="/v1/chat/completions",
-                llm_name="gpt-4o"
-        ))
+            HostProvider(
+                HostProviderParams(
+                    stt_host="https://api.openai.com",
+                    stt_api_key=args.api_key,
+                    stt_name="whisper-1",
+                    llm_host="https://api.openai.com",
+                    llm_api_key=args.api_key,
+                    llm_name="gpt-4o",
+                    llm_system_prompt=ROSPublisher(base_path + "prompts/ros-publisher.txt", base_path + "messages", environment=args.environment_context).prompt(),
+                    llm_json_schema_file=None # NOTE: the restricted oai output doesn't seem to be wrapping the messages in an array correctly
+        )))
 
     while True:
         try:
@@ -82,21 +80,17 @@ def handle_requests() -> None:
 
         try:
             print("\nResponding ...")
-            #TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
-            response = chat_commander.respond(
-                input_recording,
-                playback_response=bark is None,
-                system_prompt=RobotChat(base_path + "prompts/robot-chat.txt", personality=args.personality_context).prompt() if not args.use_local else None
-            )
+            # TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
+            response = chat_commander.respond(input_recording, playback_response=bark is None)
             if bark is not None:
                 bark.synthesize(response, load_model=True)
                 bark.play_synthesis()
             print("\nDone")
 
             print(f"\nsummary:\n\t{input_recording} -> "
-                  f"({chat_commander.params.stt_name if chat_commander.params.stt_name is not None else 'whisper'})\n\t-> '{chat_commander.last_transcription}' -> "
-                  f"({chat_commander.params.llm_name if chat_commander.params.llm_name is not None else 'llama'})\n\t-> '{chat_commander.last_response}' -> "
-                  f"({chat_commander.params.tts_name if chat_commander.params.tts_name is not None else 'bark'})\n\t-> {bark.generated_file}")
+                  f"({chat_commander.api.params.stt_name if chat_commander.api.params.stt_name is not None else 'whisper'})\n\t-> '{chat_commander.last_transcription}' -> "
+                  f"({chat_commander.api.params.llm_name if chat_commander.api.params.llm_name is not None else 'llama'})\n\t-> '{chat_commander.last_response}' -> "
+                  f"({chat_commander.api.params.tts_name if chat_commander.api.params.tts_name is not None else 'bark'})\n\t-> {bark.generated_file}")
         except KeyboardInterrupt:
             break
         except Exception as e:
@@ -106,16 +100,12 @@ def handle_requests() -> None:
 
         try:
             print("\nGenerating commands ...")
-            messages = json.loads(ros_commander.respond(
-                input_recording,
-                response_format=base_path + "grammars/posestamped.json" if args.use_local else None, #NOTE: the restricted oai output doesn't seem to be wrapping the messages in an array correctly
-                system_prompt=ROSPublisher(base_path + "prompts/ros-publisher.txt", base_path + "messages", environment=args.environment_context).prompt() if not args.use_local else None
-            ))
+            messages = json.loads(ros_commander.respond(input_recording))
             print("\nDone")
 
             print(f"\nsummary:\n\t{input_recording} -> "
-                  f"({ros_commander.params.stt_name if ros_commander.params.stt_name is not None else 'whisper'})\n\t-> '{ros_commander.last_transcription}' -> "
-                  f"({ros_commander.params.llm_name if ros_commander.params.llm_name is not None else 'llama'})\n\t-> '{ros_commander.last_response}'")
+                  f"({ros_commander.api.params.stt_name if ros_commander.api.params.stt_name is not None else 'whisper'})\n\t-> '{ros_commander.last_transcription}' -> "
+                  f"({ros_commander.api.params.llm_name if ros_commander.api.params.llm_name is not None else 'llama'})\n\t-> '{ros_commander.last_response}'")
 
             publisher = roslibpy.Topic(ros_client, args.ros_topic, args.ros_message_type)
             if ros_client.is_connected:
@@ -143,9 +133,9 @@ if __name__ == "__main__":
     parser.add_argument('--ros_topic', type=str, required=True, help='Topic for commanding the robot.')
     parser.add_argument('--ros_message_type', type=str, required=True, help='Message type for the topic.')
     parser.add_argument('--chat_voice', type=str, default=None, help='Voice type to be used by the tts. Note that local SunoAI and remote OpenAI use different options. For local, this is only valid when using the pytorch models here.')
-    #TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
+    # TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
     parser.add_argument('--pytorch_tts_model_path', type=str, default=None, help='Path to the local pytorch tts model files. Use this for better results, the server is currently only experimental.')
-    #this is only necessary if using the oai API
+    # this is only necessary if using the oai API
     parser.add_argument('--environment_context', type=str, default=None, help='Additional information about the agent is deployed in (required only for OpenAI requests).')
     parser.add_argument('--personality_context', type=str, default=None, help='Additional information about the agent personality (required only for OpenAI requests).')
     args: argparse.Namespace = parser.parse_args()

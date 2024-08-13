@@ -22,8 +22,8 @@ class ChatCommander(CommanderActionServerInterface):
         self.get_logger().info("Responding ...")
 
         try:
+            self.commander.respond(goal_handle.request.recording_file)
             # TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
-            self.commander.respond(goal_handle.request.recording_file, system_prompt=self.system_prompt)
             if self.pytorch_tts is not None:
                 self.get_logger().warn("Loading a non-server pytorch TTS model for response synthesis ...")
                 self.pytorch_tts.synthesize(self.commander.last_response, load_model=True)
@@ -33,11 +33,11 @@ class ChatCommander(CommanderActionServerInterface):
             result = Respond.Result()
             return result
 
-        output_file: str = self.pytorch_tts.generated_file if self.pytorch_tts is not None else self.commander.params.tts_generated_file
+        output_file: str = self.pytorch_tts.generated_file if self.pytorch_tts is not None else self.commander.tts_generated_file
         self.get_logger().info(f"Done\nsummary:\n\t{goal_handle.request.recording_file} -> "
-                               f"({self.commander.params.stt_name if self.commander.params.stt_name is not None else 'whisper'})\n\t-> '{self.commander.last_transcription}' -> "
-                               f"({self.commander.params.llm_name if self.commander.params.llm_name is not None else 'llama'})\n\t-> '{self.commander.last_response}' -> "
-                               f"({self.commander.params.tts_name if self.commander.params.tts_name is not None else 'bark'})\n\t-> {output_file}")
+                               f"({self.commander.api.params.stt_name if self.commander.api.params.stt_name is not None else 'whisper'})\n\t-> '{self.commander.last_transcription}' -> "
+                               f"({self.commander.api.params.llm_name if self.commander.api.params.llm_name is not None else 'llama'})\n\t-> '{self.commander.last_response}' -> "
+                               f"({self.commander.api.params.tts_name if self.commander.api.params.tts_name is not None else 'bark'})\n\t-> {output_file}")
 
         goal_handle.succeed()
         result = Respond.Result()

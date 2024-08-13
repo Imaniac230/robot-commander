@@ -10,7 +10,7 @@ Local model support will be relying heavily on [llama.cpp](https://github.com/gg
 
 ### External API
 
-This project is currently developed to use the public openai API server requests. To be able to access their API you must have an account at [OpenAI](https://openai.com) with a valid payment method set.
+This project currently supports requests to public OpenAI and Anthropic API servers. To be able to access their APIs you must have an account at [OpenAI](https://auth.openai.com/authorize?issuer=auth0.openai.com&client_id=DRivsnm2Mu42T3KOpqdtwB3NYviHYzwD&audience=https%3A%2F%2Fapi.openai.com%2Fv1&redirect_uri=https%3A%2F%2Fplatform.openai.com%2Fauth%2Fcallback&device_id=a903c544-9857-457c-b6e4-6368120a61bf&max_age=0&scope=openid+profile+email+offline_access&response_type=code&response_mode=query&state=NWxSdi5CNmxQZGpfekFIc0o5QnJVTmlaekhvTHdDMkdZSUh5OGp2RHB2Nw%3D%3D&nonce=R2pzTnVaV3FXQl9FQWZWLmZuUH5RUWU2a29qY3EwQWVLZnV3TjFCMmh3aQ%3D%3D&code_challenge=XEjn1HVfmPdUSE-8GAuCi0WrvryWEWqSWtI82gt4BFQ&code_challenge_method=S256&auth0Client=eyJuYW1lIjoiYXV0aDAtc3BhLWpzIiwidmVyc2lvbiI6IjEuMjEuMCJ9&flow=control), and/or [Anthropic](https://console.anthropic.com/login) with a valid payment method set.
 
 ## Setup
 
