@@ -11,7 +11,7 @@ chat_agent:
       port: 8083
       model_file: /media/user/data_ssd/models/llama3/hf/Meta-Llama-3-8B-Instruct/ggml-model-q4_0.gguf
       initial_prompt_file: /home/user/Work/ROS/github/local/robot-commander/prompts/robot-chat.txt
-      initial_prompt_context: "You are Loki, the god of mischief. While you never fail to perform the given requests, you occasionally try to deceive the human. You always demonstrate your wit and cunning in your responses."
+      initial_prompt_context: "You are Loki, the god of mischief and you occasionally try to deceive the human. You are also a robot being controlled using ROS, and your witty remarks remain mostly within this context."
       max_output_tokens: 50
       gpu_offload_layers: 20 # this is used only if CUDA support is enabled
 

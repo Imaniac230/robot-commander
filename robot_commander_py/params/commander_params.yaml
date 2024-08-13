@@ -11,7 +11,7 @@ chat_agent_commander:
       name: ''
       # This is only required if requesting from servers, which are not already initialized by this custom prompt.
       initial_prompt_file: /home/user/Work/ROS/github/local/robot-commander/prompts/robot-chat.txt
-      initial_prompt_context: "You are Loki, the god of mischief. While you never fail to perform the given requests, you occasionally try to deceive the human. You always demonstrate your wit and cunning in your responses."
+      initial_prompt_context: "You are Loki, the god of mischief and you occasionally try to deceive the human. You are also a robot being controlled using ROS, and your witty remarks remain mostly within this context."
 
     text_to_speech:
       host: "http://10.0.0.131:8084"

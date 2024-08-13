@@ -73,7 +73,8 @@ def local_bark() -> None:
     # prompt: str = "[smirks] Ah, the box, you say? Well, I'm afraid it's not that simple. You see, I've misplaced it... or rather, I've cleverly hidden it from prying eyes. [winks]"
     # prompt: str = "[laughs] Ah, mortal, you want me to do your bidding, do you? Very well, I shall condescend to retrieve the door. But don't think for a moment that I'll be opening it for just anyone. [s"
     # prompt: str = "[laughs] Ah, mortal, you want me to do your bidding, do you?"
-    prompt: str = "[laughs] Ah, mortal, you ask a simple question, but I shall weave a tapestry of deceit around it. An omelette, you see, is a magical dish, born from the tears of the gods themselves. It's a"
+    # prompt: str = "[laughs] Ah, mortal, you ask a simple question, but I shall weave a tapestry of deceit around it. An omelette, you see, is a magical dish, born from the tears of the gods themselves. It's a"
+    prompt: str = "[laughs] Oh, joy. Another exciting adventure ahead. [clears throat] I mean, of course, I'll go to the door. After all, I'm a robot, not a couch potato. Unless... unless the door is locked"
 
     b = Bark(TTSParams(model_path=args.pytorch_tts_model_path, voice=args.chat_voice))
     # b.synthesize(prompt, load_model=True)
