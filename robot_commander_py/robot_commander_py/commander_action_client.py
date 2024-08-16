@@ -1,5 +1,7 @@
 from robot_commander_library.utils import Recorder
+from robot_commander_library.commander import CommanderState
 from robot_commander_interfaces.action import Respond
+from robot_commander_interfaces.msg import State
 
 from pathlib import Path
 from typing import NamedTuple, Optional
@@ -32,6 +34,9 @@ class CommanderActionClient(Node):
         self._goal_action_client = ActionClient(self, Respond, 'respond_goal')
 
         self._recording_subscription = self.create_subscription(Bool, 'record_prompt', self.recording_callback, 10)
+        self._chat_state_publisher = self.create_publisher(State, 'chat_state', 10)
+        self._goal_state_publisher = self.create_publisher(State, 'goal_state', 10)
+        self._publishing_timer = self.create_timer(0.5, self.publishing_timer_callback)
 
         self._processing_thread = th.Thread(target=self._processing_loop)
 
@@ -40,6 +45,10 @@ class CommanderActionClient(Node):
 
         self.is_recording: atomics.UINT = atomics.atomic(width=1, atype=atomics.UINT)
         self.recording_file = str(Path().resolve() / "input_recording.wav")
+        self.is_playing: atomics.UINT = atomics.atomic(width=1, atype=atomics.UINT)
+        self.is_playing.store(int(False))
+        self.chat_state = CommanderState.UNKNOWN
+        self.goal_state = CommanderState.UNKNOWN
 
         # TODO(action-result): could the future.result() be used here directly?
         self.chat_result = ActionResult()
@@ -109,7 +118,7 @@ class CommanderActionClient(Node):
 
         self.get_logger().info(f"Sending prompt recording '{file}' to chat agent ...")
         self._chat_action_client.wait_for_server()
-        chat_action_goal_future = self._chat_action_client.send_goal_async(goal_msg)
+        chat_action_goal_future = self._chat_action_client.send_goal_async(goal_msg, feedback_callback=self.chat_feedback_callback)
         chat_action_goal_future.add_done_callback(self.chat_response_callback)
         self.chat_result = ActionResult(GoalStatus.STATUS_EXECUTING)
 
@@ -117,21 +126,66 @@ class CommanderActionClient(Node):
         while self.chat_result.status == GoalStatus.STATUS_EXECUTING: pass
         if self.chat_result.status == GoalStatus.STATUS_SUCCEEDED:
             self.get_logger().info("Starting chat response audio playback ...")
+            self.is_playing.store(int(True))
             data, rate = sf.read(self.chat_result.result.speech_file)
             sd.wait()
             sd.play(data, rate, blocking=False)
 
         self.get_logger().info(f"Sending prompt recording '{file}' to goal agent ...")
         self._goal_action_client.wait_for_server()
-        goal_action_goal_future = self._goal_action_client.send_goal_async(goal_msg)
+        goal_action_goal_future = self._goal_action_client.send_goal_async(goal_msg, feedback_callback=self.goal_feedback_callback)
         goal_action_goal_future.add_done_callback(self.goal_response_callback)
         self.goal_result = ActionResult(GoalStatus.STATUS_EXECUTING)
 
         sd.wait()
+        self.is_playing.store(int(False))
         self.get_logger().info("Chat response audio playback finished.")
 
     def recording_callback(self, msg):
         self.is_recording.store(int(msg.data))
+
+    def publishing_timer_callback(self):
+        chat_msg = State()
+        chat_msg.header.stamp = self.get_clock().now().to_msg()
+        if self.is_recording.load():
+            chat_msg.state = State.STATE_RECORDING_PROMPT
+        elif self.is_playing.load():
+            chat_msg.state = State.STATE_PLAYING_RESPONSE
+        elif self.chat_state is CommanderState.UNKNOWN:
+            chat_msg.state = State.STATE_UNKNOWN
+        elif self.chat_state is CommanderState.TRANSCRIBING:
+            chat_msg.state = State.STATE_TRANSCRIBING
+        elif self.chat_state is CommanderState.RESPONDING:
+            chat_msg.state = State.STATE_RESPONDING
+        elif self.chat_state is CommanderState.SYNTHESISING:
+            chat_msg.state = State.STATE_SYNTHESISING
+        elif self.chat_state is CommanderState.PLAYING_RESPONSE:
+            chat_msg.state = State.STATE_PLAYING_RESPONSE
+        elif self.chat_state is CommanderState.IDLE:
+            chat_msg.state = State.STATE_IDLE
+        elif self.chat_state is CommanderState.ERROR:
+            chat_msg.state = State.STATE_ERROR
+        self._chat_state_publisher.publish(chat_msg)
+
+        goal_msg = State()
+        goal_msg.header.stamp = self.get_clock().now().to_msg()
+        if self.is_recording.load():
+            goal_msg.state = State.STATE_RECORDING_PROMPT
+        elif self.goal_state is CommanderState.UNKNOWN:
+            goal_msg.state = State.STATE_UNKNOWN
+        elif self.goal_state is CommanderState.TRANSCRIBING:
+            goal_msg.state = State.STATE_TRANSCRIBING
+        elif self.goal_state is CommanderState.RESPONDING:
+            goal_msg.state = State.STATE_RESPONDING
+        elif self.goal_state is CommanderState.SYNTHESISING:
+            goal_msg.state = State.STATE_SYNTHESISING
+        elif self.goal_state is CommanderState.PLAYING_RESPONSE:
+            goal_msg.state = State.STATE_PLAYING_RESPONSE
+        elif self.goal_state is CommanderState.IDLE:
+            goal_msg.state = State.STATE_IDLE
+        elif self.goal_state is CommanderState.ERROR:
+            goal_msg.state = State.STATE_ERROR
+        self._goal_state_publisher.publish(goal_msg)
 
     def chat_response_callback(self, future):
         self._chat_goal_handle = future.result()
@@ -159,19 +213,21 @@ class CommanderActionClient(Node):
         result_handle = future.result()
         self.chat_result = ActionResult(result_handle.status, result_handle.result)
 
-        if self.chat_result.status == GoalStatus.STATUS_SUCCEEDED:
-            self.get_logger().info(f'Chat action result:\nspeech_file: {self.chat_result.result.speech_file}\ntext_response: {self.chat_result.result.text_response}')
-        else:
-            self.get_logger().error(f"Chat action goal '{result_handle}' has failed.")
+        if self.chat_result.status is not GoalStatus.STATUS_SUCCEEDED: self.get_logger().error(f"Chat action goal '{result_handle}' has failed.")
+        self.get_logger().info(f'Chat action result:\nspeech_file: {self.chat_result.result.speech_file}\ntext_response: {self.chat_result.result.text_response}')
 
     def goal_result_callback(self, future):
         result_handle = future.result()
         self.goal_result = ActionResult(result_handle.status, result_handle.result)
 
-        if self.goal_result.status == GoalStatus.STATUS_SUCCEEDED:
-            self.get_logger().info(f'Goal action result:\nspeech_file: {self.goal_result.result.speech_file}\ntext_response: {self.goal_result.result.text_response}')
-        else:
-            self.get_logger().error(f"Goal action goal '{result_handle}' has failed.")
+        if self.goal_result.status is not GoalStatus.STATUS_SUCCEEDED: self.get_logger().error(f"Goal action goal '{result_handle}' has failed.")
+        self.get_logger().info(f'Goal action result:\nspeech_file: {self.goal_result.result.speech_file}\ntext_response: {self.goal_result.result.text_response}')
+
+    def chat_feedback_callback(self, feedback_msg):
+        self.chat_state = CommanderState(feedback_msg.feedback.state)
+
+    def goal_feedback_callback(self, feedback_msg):
+        self.goal_state = CommanderState(feedback_msg.feedback.state)
 
 
 def main(args=None):

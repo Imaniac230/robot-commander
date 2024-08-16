@@ -17,10 +17,14 @@ endif ()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-        "action/Respond.action")
+        "msg/State.msg"
+        "action/Respond.action"
+        DEPENDENCIES std_msgs
+)
 
 if (BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)

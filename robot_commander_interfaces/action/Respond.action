@@ -6,5 +6,5 @@ string speech_file
 # Generated text response.
 string text_response
 ---
-# This is currently not fully specified and is not used.
-int64[] file_stream
+# Feedback with current state of the commander.
+int8 state

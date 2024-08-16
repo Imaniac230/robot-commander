@@ -32,7 +32,8 @@ setup(name='robot_commander_library',
           'asyncio',
           'requests',
           'pathlib',
-          # 'glob'
+          # 'glob',
+          # 'enum'
       ],
       requires=['openai'],
       python_requires='>=3.8',

@@ -1,7 +1,9 @@
+from robot_commander_library.commander import CommanderState
 from robot_commander_py import CommanderActionServerInterface, AgentType
 from robot_commander_interfaces.action import Respond
 
 from pathlib import Path
+import threading as th
 
 import rclpy
 from rclpy.action import ActionServer
@@ -22,11 +24,34 @@ class ChatCommander(CommanderActionServerInterface):
         self.get_logger().info("Responding ...")
 
         try:
-            self.commander.respond(goal_handle.request.recording_file)
+            feedback = Respond.Feedback()
+            feedback.state = CommanderState.UNKNOWN.value
+            goal_handle.publish_feedback(feedback)
+            t = th.Thread(target=self.commander.respond, kwargs={"audio_file": goal_handle.request.recording_file})
+            t.start()
+            # TODO(commander-state): we should make the commander state access threadsafe or think about doing this asynchronously
+            while t.is_alive():
+                if feedback.state != self.commander.state.value:
+                    self.get_logger().info(f"Current state: {self.commander.state=}")
+                    feedback.state = self.commander.state.value
+                    goal_handle.publish_feedback(feedback)
+            t.join()
+
             # TODO(tts-server): local tts server is only experimental for now, allow loading the pytorch model with each prompt as well
             if self.pytorch_tts is not None:
                 self.get_logger().warn("Loading a non-server pytorch TTS model for response synthesis ...")
+                feedback.state = CommanderState.SYNTHESISING.value
+                self.get_logger().info(f"Current state: {CommanderState.SYNTHESISING=}")
+                goal_handle.publish_feedback(feedback)
                 self.pytorch_tts.synthesize(self.commander.last_response, load_model=True)
+                feedback.state = CommanderState.IDLE.value
+                self.get_logger().info(f"Current state: {CommanderState.IDLE=}")
+                goal_handle.publish_feedback(feedback)
+
+            if feedback.state != self.commander.state.value:
+                self.get_logger().info(f"Current state: {self.commander.state=}")
+                feedback.state = self.commander.state.value
+                goal_handle.publish_feedback(feedback)
         except Exception as e:
             self.get_logger().error(f"Failed to get response from agent, error: '{e}'")
             goal_handle.abort()

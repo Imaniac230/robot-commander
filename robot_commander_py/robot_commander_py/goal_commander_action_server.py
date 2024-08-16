@@ -1,8 +1,10 @@
+from robot_commander_library.commander import CommanderState
 from robot_commander_py import CommanderActionServerInterface, AgentType
 from robot_commander_interfaces.action import Respond
 
 import json
 import time
+import threading as th
 
 import rclpy
 from rclpy.action import ActionServer
@@ -29,7 +31,23 @@ class GoalCommander(CommanderActionServerInterface):
         self.get_logger().info("Generating commands ...")
 
         try:
-            messages = json.loads(self.commander.respond(goal_handle.request.recording_file))
+            feedback = Respond.Feedback()
+            feedback.state = CommanderState.UNKNOWN.value
+            goal_handle.publish_feedback(feedback)
+            t = th.Thread(target=self.commander.respond, kwargs={"audio_file": goal_handle.request.recording_file})
+            t.start()
+            # TODO(commander-state): we should make the commander state access threadsafe or think about doing this asynchronously
+            while t.is_alive():
+                if feedback.state != self.commander.state.value:
+                    self.get_logger().info(f"Current state: {self.commander.state=}")
+                    feedback.state = self.commander.state.value
+                    goal_handle.publish_feedback(feedback)
+            t.join()
+            if feedback.state != self.commander.state.value:
+                self.get_logger().info(f"Current state: {self.commander.state=}")
+                feedback.state = self.commander.state.value
+                goal_handle.publish_feedback(feedback)
+            messages = json.loads(self.commander.last_response)
         except Exception as e:
             self.get_logger().error(f"Failed to get response from agent, error: '{e}'")
             goal_handle.abort()
@@ -56,6 +74,7 @@ class GoalCommander(CommanderActionServerInterface):
                 self.get_logger().error(f"Failed to parse response from agent, error: '{e}'")
                 goal_handle.abort()
                 result = Respond.Result()
+                result.text_response = self.commander.last_response
                 return result
 
             self.get_logger().info(f"Publishing goal: '{msg}'")
