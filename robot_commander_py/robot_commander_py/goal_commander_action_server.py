@@ -30,8 +30,8 @@ class GoalCommander(CommanderActionServerInterface):
     def action_callback(self, goal_handle):
         self.get_logger().info("Generating commands ...")
 
+        feedback = Respond.Feedback()
         try:
-            feedback = Respond.Feedback()
             feedback.state = CommanderState.UNKNOWN.value
             goal_handle.publish_feedback(feedback)
             t = th.Thread(target=self.commander.respond, kwargs={"audio_file": goal_handle.request.recording_file})
@@ -50,6 +50,10 @@ class GoalCommander(CommanderActionServerInterface):
             messages = json.loads(self.commander.last_response)
         except Exception as e:
             self.get_logger().error(f"Failed to get response from agent, error: '{e}'")
+            feedback.state = CommanderState.ERROR.value
+            self.get_logger().info(f"Current state: {CommanderState.ERROR=}")
+            goal_handle.publish_feedback(feedback)
+            time.sleep(0.1)
             goal_handle.abort()
             result = Respond.Result()
             return result
