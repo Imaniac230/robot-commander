@@ -6,6 +6,7 @@
 from launch import LaunchDescription, LaunchContext, LaunchDescriptionEntity
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
 
 from launch_ros.actions import Node
 
@@ -23,6 +24,7 @@ def launch_setup(context: LaunchContext) -> Optional[List[LaunchDescriptionEntit
     # Create the launch configuration variables
     params_file = LaunchConfiguration('params_file')
     namespace = LaunchConfiguration('namespace')
+    launch_with_gamepad = LaunchConfiguration('launch_with_gamepad')
 
     # Process launch variables
 
@@ -64,6 +66,20 @@ def launch_setup(context: LaunchContext) -> Optional[List[LaunchDescriptionEntit
         parameters=[],
     )
 
+    start_gamepad_node_cmd = Node(
+        condition=IfCondition(launch_with_gamepad),
+        package='input',
+        namespace=namespace,
+        executable='gamepad_node',
+        name='dualsense_gamepad',
+        parameters=[
+            {"default_state": "Disabled"},
+        ],
+        remappings=[
+            ("ros_agent_state", "goal_agent_state"),
+        ],
+    )
+
     # Create the launch description and populate
     ld = LaunchDescription()
 
@@ -71,6 +87,7 @@ def launch_setup(context: LaunchContext) -> Optional[List[LaunchDescriptionEntit
     ld.add_action(start_chat_commander_action_server_node_cmd)
     ld.add_action(start_goal_commander_action_server_node_cmd)
     ld.add_action(start_commander_action_client_node_cmd)
+    ld.add_action(start_gamepad_node_cmd)
 
     return [ld]
 
@@ -90,6 +107,11 @@ def generate_launch_description():
             name='namespace',
             default_value='',
             description='Namespace for the commander action server nodes launch.'
+        ),
+        DeclareLaunchArgument(
+            name='launch_with_gamepad',
+            default_value='False',
+            description='Run the customized dualsense gamepad interface.'
         ),
         # Perform the launch setup
         OpaqueFunction(function=launch_setup)

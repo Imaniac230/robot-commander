@@ -12,7 +12,6 @@ from robot_commander_library.utils import Requestor
 import sounddevice as sd
 import soundfile as sf
 import numpy as np
-import threading as th
 import subprocess as sp
 import nltk
 import os
@@ -32,13 +31,24 @@ class TTS:
         self.params: TTSParams = params
         self.last_generation: Any = None
         self.generated_file: str = "output_response.wav"
-        self.server_worker: Optional[th.Thread] = None
-    
-    def __del__(self):
-        if self.server_worker is not None and self.server_worker.is_alive(): self.server_worker.join()
+        self.server_worker: Optional[sp.Popen] = None
+        self.server_task: Optional[Any] = None
+
+    def __del__(self) -> None:
+        self.stop_server()
 
     def start_server(self) -> Self:
-        if self.server_worker is not None and not self.server_worker.is_alive(): self.server_worker.start()
+        if self.server_task is not None and not self.server_running(): self.server_worker = self.server_task()
+        return self
+
+    def server_running(self) -> bool:
+        return self.server_worker is not None and self.server_worker.poll() is None
+
+    def stop_server(self) -> Self:
+        if self.server_running():
+            self.server_worker.terminate()
+            self.server_worker.wait()
+            self.server_worker = None
         return self
 
     def synthesize(self, prompt: str, *args, **kwargs) -> Any: pass
@@ -92,8 +102,7 @@ class BarkCPP(TTS):
         self.library_path: str = os.getenv("ROBOT_COMMANDER_BARK_CPP_PATH", "")
         if not self.library_path: raise EnvironmentError("Required variable ROBOT_COMMANDER_BARK_CPP_PATH was not found.")
         self.bin_path: str = "build/examples"
-        # TODO: check failures
-        self.server_worker = th.Thread(target=sp.run, args=[self._build_command("server")])
+        self.server_task = lambda : sp.Popen(self._build_command("server"))
 
     def _build_command(self, command: str, prompt: str = "") -> List[str]:
         full_command: str = self.library_path + '/' + self.bin_path + '/' + command + '/' + command
@@ -118,7 +127,8 @@ class BarkCPP(TTS):
         #NOTE: the example main always stores the output into a wav file
         if load_model: sp.check_output(self._build_command("main", prompt))
         else:
-            if self.server_worker.is_alive():
+            #TODO(failed-server): decide how to react if server is not alive at this point
+            if self.server_running():
                 #TODO(bark-cpp): using a custom finalization of the server, refactor this once there is a stable bark.cpp release
                 payload = {"input": prompt}
                 r: Optional[Dict] = Requestor("http://" + self.params.server_hostname + ':' + str(self.params.server_port)).synthesize("/v1/audio/speech", payload)

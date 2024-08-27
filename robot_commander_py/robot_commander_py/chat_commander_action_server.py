@@ -2,9 +2,9 @@ from robot_commander_library.commander import CommanderState
 from robot_commander_py import CommanderActionServerInterface, AgentType
 from robot_commander_interfaces.action import Respond
 
-import time
-import threading as th
 from pathlib import Path
+import threading as th
+import time
 
 import rclpy
 from rclpy.action import ActionServer
@@ -53,6 +53,11 @@ class ChatCommander(CommanderActionServerInterface):
                 self.get_logger().info(f"Current state: {CommanderState.IDLE=}")
                 goal_handle.publish_feedback(feedback)
 
+            if feedback.state == CommanderState.ERROR.value:
+                time.sleep(0.1)
+                goal_handle.abort()
+                result = Respond.Result()
+                return result
         except Exception as e:
             self.get_logger().error(f"Failed to get response from agent, error: '{e}'")
             feedback.state = CommanderState.ERROR.value

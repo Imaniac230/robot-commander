@@ -28,20 +28,32 @@ class Requestor:
     def transcribe(self, endpoint: str, file: Dict[str, Tuple[Any, BinaryIO, str]], data: Optional[Dict[str, str]] = None) -> Optional[Dict]:
         # NOTE: do not specify {"Content-Type": "multipart/form-data"}, must be provided by requests together with the boundary
         self.headers.pop("Content-Type", None)
-        r: Optional[rq.Response] = self.validate_response(rq.post(self.url + endpoint, files=file, data=data, headers=self.headers))
-        return r.json() if r is not None else r
+        try:
+            r: Optional[rq.Response] = self.validate_response(rq.post(self.url + endpoint, files=file, data=data, headers=self.headers))
+            return r.json() if r is not None else r
+        except Exception as e:
+            print(f"Failed to send transcription request, error: '{e}'")
+            return None
 
     # TODO(restricted-type): unsupported operand type(s) for |: '_GenericAlias' and '_GenericAlias'
     #   Dict[str, List[str] | List[Dict[str, str]] | Dict[str, str] | str]
     def respond(self, endpoint: str, json: Dict) -> Optional[Dict]:
         self.headers["Content-Type"] = "application/json"
-        r: Optional[rq.Response] = self.validate_response(rq.post(self.url + endpoint, json=json, headers=self.headers))
-        return r.json() if r is not None else r
+        try:
+            r: Optional[rq.Response] = self.validate_response(rq.post(self.url + endpoint, json=json, headers=self.headers))
+            return r.json() if r is not None else r
+        except Exception as e:
+            print(f"Failed to send response request, error: '{e}'")
+            return None
 
     def synthesize(self, endpoint: str, json: Dict[str, str]) -> Optional[Iterator]:
         self.headers["Content-Type"] = "application/json"
-        r: Optional[rq.Response] = self.validate_response(rq.post(self.url + endpoint, json=json, headers=self.headers))
-        return r.iter_content() if r is not None else r
+        try:
+            r: Optional[rq.Response] = self.validate_response(rq.post(self.url + endpoint, json=json, headers=self.headers))
+            return r.iter_content() if r is not None else r
+        except Exception as e:
+            print(f"Failed to send synthesis request, error: '{e}'")
+            return None
 
 
 @dataclass

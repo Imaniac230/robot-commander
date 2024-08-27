@@ -4,6 +4,8 @@ project(library_vendor_cpp)
 # find dependencies
 find_package(ament_cmake REQUIRED)
 
-message(WARNING "This package currently does nothing, please compile all libraries manually using 'cmake' or use the 'library_vendor_manual_setup.sh' script.")
+add_subdirectory(input)
+
+message(WARNING "This package does NOT currently install any external dependencies, please compile all external libraries manually using 'cmake' or use the 'library_vendor_manual_setup.sh' script.")
 
 ament_package()

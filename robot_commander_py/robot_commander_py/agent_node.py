@@ -2,9 +2,10 @@ from robot_commander_library.ai_interface import LlamaCPP, LLMParams, WhisperCPP
 from robot_commander_library.commander import Agent
 from robot_commander_library.utils import ROSPublisher, RobotChat
 
-import netifaces as ni
 from typing import Optional
 from pathlib import Path
+import netifaces as ni
+import time
 
 import rclpy
 from rclpy.node import Node
@@ -111,6 +112,9 @@ class AgentServer(Node):
             self.agent.launch()
         else:
             raise RuntimeError("Agent was not initialized.")
+
+        while self.agent.alive(): time.sleep(0.1)
+        raise RuntimeError("Agent failed to run successfully, terminating.")
 
 
 def main(args=None):

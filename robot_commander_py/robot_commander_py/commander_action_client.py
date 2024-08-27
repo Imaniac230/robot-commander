@@ -34,8 +34,8 @@ class CommanderActionClient(Node):
         self._goal_action_client = ActionClient(self, Respond, 'respond_goal')
 
         self._recording_subscription = self.create_subscription(Bool, 'record_prompt', self.recording_callback, 10)
-        self._chat_state_publisher = self.create_publisher(State, 'chat_state', 10)
-        self._goal_state_publisher = self.create_publisher(State, 'goal_state', 10)
+        self._chat_state_publisher = self.create_publisher(State, 'chat_agent_state', 10)
+        self._goal_state_publisher = self.create_publisher(State, 'goal_agent_state', 10)
         self._publishing_timer = self.create_timer(0.5, self.publishing_timer_callback)
 
         self._processing_thread = th.Thread(target=self._processing_loop)

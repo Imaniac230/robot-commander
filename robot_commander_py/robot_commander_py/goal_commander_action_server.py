@@ -2,9 +2,9 @@ from robot_commander_library.commander import CommanderState
 from robot_commander_py import CommanderActionServerInterface, AgentType
 from robot_commander_interfaces.action import Respond
 
+import threading as th
 import json
 import time
-import threading as th
 
 import rclpy
 from rclpy.action import ActionServer
@@ -47,6 +47,12 @@ class GoalCommander(CommanderActionServerInterface):
                 self.get_logger().info(f"Current state: {self.commander.state=}")
                 feedback.state = self.commander.state.value
                 goal_handle.publish_feedback(feedback)
+            if feedback.state == CommanderState.ERROR.value:
+                time.sleep(0.1)
+                goal_handle.abort()
+                result = Respond.Result()
+                return result
+
             messages = json.loads(self.commander.last_response)
         except Exception as e:
             self.get_logger().error(f"Failed to get response from agent, error: '{e}'")

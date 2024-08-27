@@ -23,6 +23,18 @@ class Agent:
         if self.tts is not None: self.tts.start_server()
         return self
 
+    def alive(self) -> bool:
+        if not self.stt.server_running(): return False
+        if not self.llm.server_running(): return False
+        if self.tts is not None and not self.tts.server_running(): return False
+        return True
+
+    def kill(self) -> Self:
+        self.stt.stop_server()
+        self.llm.stop_server()
+        if self.tts is not None: self.tts.stop_server()
+        return self
+
     def respond(self, audio_file: str, load_models: bool = False, playback_response: bool = False) -> Any:
         text_response: str = self.llm.respond(self.stt.transcribe(audio_file, load_model=load_models), inline_response=True if self.tts is not None else False, load_model=load_models)
         if self.tts is None: return text_response
