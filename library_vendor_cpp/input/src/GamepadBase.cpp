@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <input/DualsenseCtlWrapper.h>
 #include <input/GamepadBase.h>
 
 using namespace std::chrono_literals;
@@ -73,6 +74,12 @@ void GamepadBase::onConnected() {
         connectionState.gamepadState = connectionState.rememberedGamepadState.value_or(defaultGamepadState);
         connectionState.rememberedGamepadState = std::nullopt;
         RCLCPP_WARN(logger_, "New gamepad opened.");
+        if (isDevice(GamepadID::Vendor::DualSense, GamepadID::Product::DualSense)) {
+            RCLCPP_INFO(logger_, "Initializing the dualsense gamepad.");
+            DualsenseCtl(logger_).speaker(DualsenseCtl::SpeakerState::Both);
+            DualsenseCtl(logger_).volume(230);
+            DualsenseCtl(logger_).lightbarEnable(false);
+        }
     } else {
         RCLCPP_ERROR(logger_, "Attempted to open multiple gamepads at once.");
     }
@@ -126,23 +133,6 @@ void GamepadBase::setMode(const GamepadState::Value mode) {
         default:
             break;
     }
-}
-
-void GamepadBase::reset() {
-    connectionState.gamepadState = defaultGamepadState;
-    connectionState.rememberedGamepadState = std::nullopt;
-}
-
-void GamepadBase::enable() {
-    if (connectionState.gamepadState == GamepadState::Value::Disabled) {
-        connectionState.gamepadState = connectionState.rememberedGamepadState.value_or(defaultGamepadState);
-        connectionState.rememberedGamepadState = std::nullopt;
-    }
-}
-
-void GamepadBase::disable() {
-    connectionState.rememberedGamepadState = connectionState.gamepadState;
-    connectionState.gamepadState = GamepadState::Value::Disabled;
 }
 
 bool operator==(const GamepadState::Value left, const std::string &right) {

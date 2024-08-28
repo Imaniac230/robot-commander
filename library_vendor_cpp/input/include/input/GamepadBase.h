@@ -12,6 +12,11 @@
 
 void sigtermHandler();
 
+namespace GamepadID {
+    enum class Vendor : uint16_t { DualSense = 0x054c };
+    enum class Product : uint16_t { DualSense = 0x0ce6 };
+}// namespace GamepadID
+
 class GamepadState {
 public:
     enum class Value : int8_t { Error = -1, Disconnected = 0, RawMode = 1, AssistedMode = 2, Disabled = 3 };
@@ -75,9 +80,21 @@ protected:
     virtual void onDisconnected();
     virtual void switchMode();
     virtual void setMode(GamepadState::Value mode);
-    virtual void reset();
-    virtual void disable();
-    virtual void enable();
+    inline virtual void reset() {
+        connectionState.gamepadState = defaultGamepadState;
+        connectionState.rememberedGamepadState = std::nullopt;
+    }
+
+    inline virtual void disable() {
+        connectionState.rememberedGamepadState = connectionState.gamepadState;
+        connectionState.gamepadState = GamepadState::Value::Disabled;
+    }
+    inline virtual void enable() {
+        if (connectionState.gamepadState == GamepadState::Value::Disabled) {
+            connectionState.gamepadState = connectionState.rememberedGamepadState.value_or(defaultGamepadState);
+            connectionState.rememberedGamepadState = std::nullopt;
+        }
+    }
 
     virtual void onButtonPressed(uint8_t button) = 0;
     virtual void onButtonReleased(uint8_t button) = 0;
@@ -85,6 +102,10 @@ protected:
 
     void onEventTimerTick();
     void closeHandle();
+    [[nodiscard]] inline bool isDevice(const GamepadID::Vendor vid, const GamepadID::Product pid) const {
+        return (SDL_GameControllerGetVendor(gamepadHandler) == static_cast<uint16_t>(vid)) &&
+               (SDL_GameControllerGetProduct(gamepadHandler) == static_cast<uint16_t>(pid));
+    }
 
     //TODO(mutex): decide if the connectionState should be mutexed as well
     ConnectionState connectionState{};

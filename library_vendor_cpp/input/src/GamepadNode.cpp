@@ -20,7 +20,8 @@ GamepadNode::~GamepadNode() {
     RCLCPP_INFO(get_logger(), "Destroying the gamepad node.");
     serviceHandlingThread.second = false;
     if (serviceHandlingThread.first.joinable()) serviceHandlingThread.first.join();
-    DualsenseCtl(get_logger()).lightbarEnable(false);
+    if (isDevice(GamepadID::Vendor::DualSense, GamepadID::Product::DualSense))
+        DualsenseCtl(get_logger()).lightbarEnable(false);
 }
 
 void GamepadNode::onInitialize() {
@@ -86,11 +87,6 @@ void GamepadNode::onInitialize() {
                                                }
                                            }),
                                            true);
-
-    RCLCPP_INFO(get_logger(), "Initializing the dualsense gamepad.");
-    DualsenseCtl(get_logger()).speaker(DualsenseCtl::SpeakerState::Both);
-    DualsenseCtl(get_logger()).volume(230);
-    DualsenseCtl(get_logger()).lightbarEnable(false);
 }
 
 void GamepadNode::appendClient(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client) {
@@ -155,8 +151,12 @@ void GamepadNode::onFastPublishingTimerTick() {
 }
 
 void GamepadNode::onLightbarUpdateTimerTick() {
-    if (updateLightbarFromState(chatAgentState)) return;
-    updateLightbarFromState(rosAgentState);
+    if (isDevice(GamepadID::Vendor::DualSense, GamepadID::Product::DualSense) &&
+        (connectionState.gamepadState != GamepadState::Value::Disconnected) &&
+        (connectionState.gamepadState != GamepadState::Value::Error)) {
+        if (updateLightbarFromState(chatAgentState)) return;
+        updateLightbarFromState(rosAgentState);
+    }
 }
 
 void GamepadNode::chatAgentStateCallback(const robot_commander_interfaces::msg::State::SharedPtr state) {
