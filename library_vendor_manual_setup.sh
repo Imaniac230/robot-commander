@@ -47,6 +47,7 @@ barkCppOptions="-DGGML_CUBLAS=$useCuda -DGGML_CUDA_F16=$useCuda -DGGML_AVX512=OF
 barkPath="$py_vendor_path/bark"
 
 robotCommanderPath="$py_vendor_path/robot_commander_library"
+inputPath="$cpp_vendor_path/input"
 
 
 echo -e "\nInstalling python robot-commander-library\n\n"
@@ -58,6 +59,8 @@ echo -e "\nrobot-commander-library installed successfully\n\n"
 echo -e "\nDownloading external libraries ...\n\n"
 vcs import "$cpp_vendor_path" < "$cpp_vendor_path"/libraries.repos || { echo "Failed to download external cpp libraries !"; exit 1; }
 vcs import "$py_vendor_path" < "$py_vendor_path"/libraries.repos || { echo "Failed to download external py libraries !"; exit 1; }
+
+vcs import "$inputPath" < "$inputPath"/libraries.repos || { echo "Failed to download dualsense library !"; exit 1; }
 echo -e "\nLibraries downloaded.\n"
 
 echo -e "\nBuilding llama.cpp ...\n\n"

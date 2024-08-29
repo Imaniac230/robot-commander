@@ -8,13 +8,15 @@
 #include <mutex>
 #include <optional>
 
+#include <input/Dualsense.h>
+
 #include <rclcpp/node.hpp>
 
 void sigtermHandler();
 
 namespace GamepadID {
-    enum class Vendor : uint16_t { DualSense = 0x054c };
-    enum class Product : uint16_t { DualSense = 0x0ce6 };
+    enum class Vendor : uint16_t { DualSense = DS_VENDOR_ID };
+    enum class Product : uint16_t { DualSense = DS_PRODUCT_ID };
 }// namespace GamepadID
 
 class GamepadState {

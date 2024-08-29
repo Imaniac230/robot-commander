@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <input/DualsenseCtlWrapper.h>
+#include <input/Dualsense.h>
 #include <input/GamepadBase.h>
 
 using namespace std::chrono_literals;
@@ -76,9 +76,13 @@ void GamepadBase::onConnected() {
         RCLCPP_WARN(logger_, "New gamepad opened.");
         if (isDevice(GamepadID::Vendor::DualSense, GamepadID::Product::DualSense)) {
             RCLCPP_INFO(logger_, "Initializing the dualsense gamepad.");
-            DualsenseCtl(logger_).speaker(DualsenseCtl::SpeakerState::Both);
-            DualsenseCtl(logger_).volume(230);
-            DualsenseCtl(logger_).lightbarEnable(false);
+            Dualsense::Device dualsense(logger_);
+            dualsense.speaker(Dualsense::SpeakerState::Both);
+            dualsense.volume(230);
+            //NOTE: blinking lightbar to signalize connection
+            //NOTE: leaving lightbar explicitly on seems to conflict with the color settings
+            dualsense.lightbar(true);
+            dualsense.lightbar(false);
         }
     } else {
         RCLCPP_ERROR(logger_, "Attempted to open multiple gamepads at once.");

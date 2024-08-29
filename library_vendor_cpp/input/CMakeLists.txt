@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
 project(input)
 
-# Default to C99
+# Default to C11
 if (NOT CMAKE_C_STANDARD)
-    set(CMAKE_C_STANDARD 99)
+    set(CMAKE_C_STANDARD 11)
 endif ()
 
-# Default to C++17
+# Default to C++20
 if (NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 20)
 endif ()
@@ -45,16 +45,13 @@ endif ()
 
 add_subdirectory(lib)
 
-add_library(${CORE_LIB_NAME} SHARED
-        src/DualsenseCtlWrapper.cpp
+add_library(${CORE_LIB_NAME} STATIC
+        src/Dualsense.cpp
         src/GamepadBase.cpp
         src/GamepadNode.cpp
 )
 ament_target_dependencies(${CORE_LIB_NAME} ${ROS_DEPENDENCIES})
-target_link_libraries(${CORE_LIB_NAME} ${SDL2_LIBRARIES})
-#FIXME(dualsensectl-library) we cannot currently add the dualsensectl project directly as a library since it's created
-#   as a single main cli application, until an actual usable library is found we have a simple wrapper for the cli commands instead
-#add_dependencies(${CORE_LIB_NAME} dualsensectl)
+target_link_libraries(${CORE_LIB_NAME} ${SDL2_LIBRARIES} libdualsensectl)
 
 add_executable(${GAMEPAD_NODE_EXEC_NAME} src/gamepad_node.cpp)
 target_link_libraries(${GAMEPAD_NODE_EXEC_NAME} ${CORE_LIB_NAME})

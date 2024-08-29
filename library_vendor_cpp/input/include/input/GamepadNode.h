@@ -12,7 +12,7 @@
 
 #include <robot_commander_interfaces/msg/state.hpp>
 
-#include <input/DualsenseCtlWrapper.h>
+#include <input/Dualsense.h>
 #include <input/GamepadBase.h>
 
 namespace GamepadNodeParameters {
@@ -34,7 +34,7 @@ private:
     void onInitialize();
 
     void onFastPublishingTimerTick();
-    void onLightbarUpdateTimerTick();
+    void onAgentFeedbackTimerTick();
     void chatAgentStateCallback(const robot_commander_interfaces::msg::State::SharedPtr state);
     void rosAgentStateCallback(const robot_commander_interfaces::msg::State::SharedPtr state);
 
@@ -43,52 +43,12 @@ private:
     void onJoystickAxisMoved(uint8_t axis, int16_t value) override;
 
     void appendClient(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client);
-    void callService(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client);
-    inline bool updateLightbarFromState(const robot_commander_interfaces::msg::State state) {
-        switch (state.state) {
-            case robot_commander_interfaces::msg::State::STATE_UNKNOWN:
-                DualsenseCtl(get_logger()).lightbarColor(DualsenseCtl::Color{.brightness = 0});
-                return true;
-            case robot_commander_interfaces::msg::State::STATE_RECORDING_PROMPT:
-                DualsenseCtl(get_logger())
-                        .lightbarColor(
-                                DualsenseCtl::Color{.blue = 255,
-                                                    .brightness = static_cast<uint8_t>(lightbarToggle ? 255 : 0)});
-                lightbarToggle = !lightbarToggle;
-                return true;
-            case robot_commander_interfaces::msg::State::STATE_TRANSCRIBING:
-            case robot_commander_interfaces::msg::State::STATE_RESPONDING:
-            case robot_commander_interfaces::msg::State::STATE_SYNTHESISING:
-                DualsenseCtl(get_logger())
-                        .lightbarColor(
-                                DualsenseCtl::Color{.red = 255,
-                                                    .green = 255,
-                                                    .brightness = static_cast<uint8_t>(lightbarToggle ? 255 : 0)});
-                lightbarToggle = !lightbarToggle;
-                return true;
-            case robot_commander_interfaces::msg::State::STATE_PLAYING_RESPONSE:
-                DualsenseCtl(get_logger())
-                        .lightbarColor(
-                                DualsenseCtl::Color{.red = 255,
-                                                    .green = 255,
-                                                    .blue = 255,
-                                                    .brightness = static_cast<uint8_t>(lightbarToggle ? 255 : 0)});
-                lightbarToggle = !lightbarToggle;
-                return true;
-            case robot_commander_interfaces::msg::State::STATE_IDLE:
-                DualsenseCtl(get_logger()).lightbarColor(DualsenseCtl::Color{.green = 255, .brightness = 255});
-                return false;
-            case robot_commander_interfaces::msg::State::STATE_ERROR:
-                DualsenseCtl(get_logger()).lightbarColor(DualsenseCtl::Color{.red = 255, .brightness = 255});
-                return true;
-        }
-
-        return false;
-    }
+    void callService(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client) const;
+    bool updateLightbarFromState(robot_commander_interfaces::msg::State state);
 
     rclcpp::TimerBase::SharedPtr fastPublishingTimer;
     rclcpp::TimerBase::SharedPtr eventTimer;
-    rclcpp::TimerBase::SharedPtr lightbarUpdateTimer;
+    rclcpp::TimerBase::SharedPtr agentFeedbackTimer;
 
     rclcpp::Subscription<robot_commander_interfaces::msg::State>::SharedPtr chatAgentStateSubscription;
     rclcpp::Subscription<robot_commander_interfaces::msg::State>::SharedPtr rosAgentStateSubscription;
@@ -122,6 +82,8 @@ private:
     float maxSpeed{};
 
     bool lightbarToggle = false;
+    bool microphoneLEDToggle = false;
+    Dualsense::Players playerLEDs{};
 
     //TODO(qos): default config, utilize this more in the future
     //  using a foxy-compatible syntax - humble also supports the constructor syntax

@@ -21,7 +21,7 @@ GamepadNode::~GamepadNode() {
     serviceHandlingThread.second = false;
     if (serviceHandlingThread.first.joinable()) serviceHandlingThread.first.join();
     if (isDevice(GamepadID::Vendor::DualSense, GamepadID::Product::DualSense))
-        DualsenseCtl(get_logger()).lightbarEnable(false);
+        Dualsense::Device(get_logger()).lightbar(false);
 }
 
 void GamepadNode::onInitialize() {
@@ -58,7 +58,7 @@ void GamepadNode::onInitialize() {
     recordPromptPublisher = create_publisher<std_msgs::msg::Bool>("record_prompt", qosSetting);
     fastPublishingTimer = create_wall_timer(100ms, [this] { onFastPublishingTimerTick(); });
     eventTimer = create_wall_timer(100ms, [this] { onEventTimerTick(); });
-    lightbarUpdateTimer = create_wall_timer(200ms, [this] { onLightbarUpdateTimerTick(); });
+    agentFeedbackTimer = create_wall_timer(200ms, [this] { onAgentFeedbackTimerTick(); });
 
     RCLCPP_INFO(get_logger(), "Initializing clients.");
     auto service_callback_group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -101,7 +101,7 @@ void GamepadNode::appendClient(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr
     RCLCPP_WARN(get_logger(), "Failed to push client '%s', client pool is full.", client->get_service_name());
 }
 
-void GamepadNode::callService(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client) {
+void GamepadNode::callService(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client) const {
     auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
 
     RCLCPP_INFO(get_logger(), "Waiting 2 seconds for service '%s' to become available ...", client->get_service_name());
@@ -127,6 +127,40 @@ void GamepadNode::callService(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr 
     client->async_send_request(request, inner_client_callback);
 }
 
+bool GamepadNode::updateLightbarFromState(const robot_commander_interfaces::msg::State state) {
+    Dualsense::Device dualsense(get_logger());
+    switch (state.state) {
+        case robot_commander_interfaces::msg::State::STATE_UNKNOWN:
+            dualsense.lightbar(Dualsense::Color{.brightness = 0});
+            return false;
+        case robot_commander_interfaces::msg::State::STATE_TRANSCRIBING:
+            dualsense.lightbar(
+                    Dualsense::Color{.blue = 255, .brightness = static_cast<uint8_t>(lightbarToggle ? 255 : 0)});
+            lightbarToggle = !lightbarToggle;
+            return true;
+        case robot_commander_interfaces::msg::State::STATE_RESPONDING:
+            dualsense.lightbar(Dualsense::Color{.green = 130,
+                                                .blue = 255,
+                                                .brightness = static_cast<uint8_t>(lightbarToggle ? 255 : 0)});
+            lightbarToggle = !lightbarToggle;
+            return true;
+        case robot_commander_interfaces::msg::State::STATE_SYNTHESISING:
+            dualsense.lightbar(Dualsense::Color{.green = 255,
+                                                .blue = 130,
+                                                .brightness = static_cast<uint8_t>(lightbarToggle ? 255 : 0)});
+            lightbarToggle = !lightbarToggle;
+            return true;
+        case robot_commander_interfaces::msg::State::STATE_IDLE:
+            dualsense.lightbar(Dualsense::Color{.green = 255, .brightness = 255});
+            return false;
+        case robot_commander_interfaces::msg::State::STATE_ERROR:
+            dualsense.lightbar(Dualsense::Color{.red = 255, .brightness = 255});
+            return true;
+    }
+
+    return false;
+}
+
 void GamepadNode::onFastPublishingTimerTick() {
     geometry_msgs::msg::Twist twistMsg;
     if (connectionState.gamepadState == GamepadState::Value::RawMode) {
@@ -150,12 +184,23 @@ void GamepadNode::onFastPublishingTimerTick() {
     gamepadStatePublisher->publish(stateStrMsg);
 }
 
-void GamepadNode::onLightbarUpdateTimerTick() {
+void GamepadNode::onAgentFeedbackTimerTick() {
     if (isDevice(GamepadID::Vendor::DualSense, GamepadID::Product::DualSense) &&
         (connectionState.gamepadState != GamepadState::Value::Disconnected) &&
         (connectionState.gamepadState != GamepadState::Value::Error)) {
-        if (updateLightbarFromState(chatAgentState)) return;
-        updateLightbarFromState(rosAgentState);
+        Dualsense::Device dualsense(get_logger());
+        //NOTE: both agents will currently use the same prompt recording
+        microphoneLEDToggle =
+                (chatAgentState.state == robot_commander_interfaces::msg::State::STATE_RECORDING_PROMPT) &&
+                !microphoneLEDToggle;
+        dualsense.microphoneLED(microphoneLEDToggle);
+
+        if (!updateLightbarFromState(chatAgentState)) updateLightbarFromState(rosAgentState);
+
+        playerLEDs = (chatAgentState.state == robot_commander_interfaces::msg::State::STATE_PLAYING_RESPONSE)
+                             ? ++playerLEDs
+                             : Dualsense::Players();
+        dualsense.playerLEDs(playerLEDs);
     }
 }
 

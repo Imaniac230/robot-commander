@@ -1,0 +1,5 @@
+repositories:
+  lib/dualsensectl:
+    type: git
+    url: https://github.com/Imaniac230/dualsensectl.git
+    version: static-library
