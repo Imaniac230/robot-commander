@@ -53,15 +53,9 @@ class WhisperCPP(STT):
     # We shouldn't attempt to do anything like that here.
     def __init__(self, params: STTParams) -> None:
         super().__init__(params)
-        #TODO(bin-path): decide if we want to support installed bins as well
-        self.library_path: str = os.getenv("ROBOT_COMMANDER_WHISPER_CPP_PATH", "")
-        if not self.library_path: raise EnvironmentError("Required variable ROBOT_COMMANDER_WHISPER_CPP_PATH was not found.")
-        self.bin_path: str = "build/bin"
-        self.server_task = lambda : sp.Popen(self._build_command("server"))
+        self.server_task = lambda : sp.Popen(self._build_command("whisper-server"))
 
     def _build_command(self, command: str, file: str = "") -> List[str]:
-        full_command: str = self.library_path + '/' + self.bin_path + '/' + command
-
         # implicit params
         # use translation mode if speaking in other than english
         args: List[str] = ["--translate", "--language", "auto"]
@@ -72,19 +66,19 @@ class WhisperCPP(STT):
         # configurable params (optional, default by whisper.cpp implementation)
         if self.params.n_of_threads_to_use is not None: args += ["--threads", str(self.params.n_of_threads_to_use)]
 
-        if command == "server":
+        if command == "whisper-server":
             if self.params.server_hostname is not None: args += ["--host", self.params.server_hostname]
             if self.params.server_port is not None: args += ["--port", str(self.params.server_port)]
-        elif command == "main":
+        elif command == "whisper-main":
             args += ["--file", file]
         else:
             raise NotImplementedError(f"command '{command}' is not supported")
 
-        return [full_command] + args
+        return [command] + args
 
     def transcribe(self, audio_file: str, load_model: bool = False) -> str:
         if load_model:
-            raw_output: List[str] = sp.check_output(self._build_command("main", audio_file), text=True).split('\n')
+            raw_output: List[str] = sp.check_output(self._build_command("whisper-main", audio_file), text=True).split('\n')
             stripped_raw = []
             for line in raw_output:
                 if len(line) > 0:

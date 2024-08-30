@@ -60,15 +60,9 @@ class LlamaCPP(LLM):
     # We shouldn't attempt to do anything like that here.
     def __init__(self, params: LLMParams) -> None:
         super().__init__(params)
-        #TODO(bin-path): decide if we want to support installed bins as well
-        self.library_path: str = os.getenv("ROBOT_COMMANDER_LLAMA_CPP_PATH", "")
-        if not self.library_path: raise EnvironmentError("Required variable ROBOT_COMMANDER_LLAMA_CPP_PATH was not found.")
-        self.bin_path: str = "build/bin"
         self.server_task = lambda : sp.Popen(self._build_command("llama-server"))
 
     def _build_command(self, command: str, prompt: str = "") -> List[str]:
-        full_command: str = self.library_path + '/' + self.bin_path + '/' + command
-
         # implicit params
         # load context size from model hparams
         args: List[str] = ["--ctx-size", str(0)]
@@ -114,7 +108,7 @@ class LlamaCPP(LLM):
         else:
             raise NotImplementedError(f"command '{command}' is not supported")
 
-        return [full_command] + args
+        return [command] + args
 
     def respond(self, prompt: str, inline_response: bool = False, load_model: bool = False) -> str:
         full_prompt: str = prompt if not self.params.initial_prompt else self.params.initial_prompt + 'REQUEST:\n' + prompt

@@ -25,18 +25,26 @@ This project currently supports requests to public OpenAI and Anthropic API serv
    ```
    git clone https://github.com/Imaniac230/robot-commander.git && . /opt/ros/<ros-distro>/setup.bash && rosdep install --from-paths robot-commander/ --ignore-src -r -y
    ```
-3. Build the packages:
+3. This project relies on the independent `robot_commander_library` package located in `library_vendor/`. The other external projects listed in `library_vendor/libraries.repos` are required for usage with local models only (if you're only going to make requests to external servers, you only need `robot_commander_library`). The `input` package is also optional, and provides a gamepad interface with support for additional interactions with the DualSense PS5 controller. To download all the external libraries use the `library_vendor_setup.sh` script (or run the included commands manually):
+   ```bash
+   ./library_vendor_setup.sh
+   ```
+4. Build the packages:
    ```bash
     cd robot-commander/ && colcon build
    ```
-4. This project relies on the independent `robot_commander_library` package located in `library_vendor_py/`.  The other external projects listed in `library_vendor_cpp/libraries.repos` and `library_vendor_py/libraries.repos` are required for usage with local models only (if you're only going to make request to external servers, you only need `robot_commander_library`). Building implicitly with the `colcon` ROS interface is not yet implemented, and they must all be built and/or installed manually. For convenience, you can use the setup script, which will perform all the installation steps with pre-defined options:
+   >NOTE: If you want to build the .cpp libraries with CUDA support enable the USE_CUDA option:
    ```bash
-   ./library_vendor_manual_setup.sh
+   cd robot-commander/ && colcon build --cmake-args -DUSE_CUDA=ON
    ```
-   >NOTE: This will download all external dependencies, compile the cpp projects with predefined options, and install the python projects locally. If you want to compile `llama.cpp` and `whisper.cpp` with different options, please refer to their respective instructions for more detailed compilation steps. This will also create an `environment.sh` file, which defines exports of additional environment variables `ROBOT_COMMANDER_WHISPER_CPP_PATH`, `ROBOT_COMMANDER_LLAMA_CPP_PATH`, `ROBOT_COMMANDER_BARK_CPP_PATH`, and `SUNO_OFFLOAD_CPU`.
-5. Source the current ROS workspace and the additional customized environment:
+   >NOTE: If you want to compile `llama.cpp` and `whisper.cpp` with different options than defined in this project, please refer to their respective instructions for more detailed compilation steps.
+   >NOTE: Building the python `Bark` package might currently fail, in which case you will have to install it locally using pip:
    ```bash
-   . install/setup.bash && . environment.sh
+   cd library_vendor/bark && pip3 install .
+   ```
+5. Source the current ROS workspace:
+   ```bash
+   . install/setup.bash
    ```
 
 ### Local models
@@ -61,15 +69,15 @@ This project requires all models to be downloaded and/or quantized manually befo
    > Make sure that you have `git lfs` installed: `git lfs install`
 3. Use the `convert-pt-to-ggml.py` script from `whisper.cpp` to convert, ex:
    ```
-   python3 "$ROBOT_COMMANDER_WHISPER_CPP_PATH"/models/convert-pt-to-ggml.py <path-to-downloaded-model-file>/large-v3.pt <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
+   python3 whisper-convert-pt-to-ggml.py <path-to-downloaded-model-file>/large-v3.pt <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
    ```
    > To convert the model downloaded from huggingface, use `convert-h5-to-ggml.py` instead, ex:
    > ```
-   > python3 "$ROBOT_COMMANDER_WHISPER_CPP_PATH"/models/convert-h5-to-ggml.py <path-to-downloaded-model-files> <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
+   > python3 whisper-convert-h5-to-ggml.py <path-to-downloaded-model-files> <path-to-official-whisper-repo> <path-to-converted-file> && mv <path-to-converted-file>/ggml-model.bin <path-to-converted-file>/ggml-model-f16-large-v3.bin
    > ```
 4. Quantize the converted model, ex.:
    ```
-   "$ROBOT_COMMANDER_WHISPER_CPP_PATH"/build/bin/quantize <path-to-converted-file>/ggml-model-f16-large-v3.bin <path-to-quantized-file>/ggml-model-q4_0-large-v3.bin q4_0
+   whisper-quantize <path-to-converted-file>/ggml-model-f16-large-v3.bin <path-to-quantized-file>/ggml-model-q4_0-large-v3.bin q4_0
    ```
 
  ***Llama3***
@@ -78,13 +86,13 @@ This project requires all models to be downloaded and/or quantized manually befo
    git clone https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct
    ```
    > Make sure that you have `git lfs` installed: `git lfs install`
-2. Use the `convert-hf-to-gguf.py` script from `llama.cpp` to convert, ex.:
+2. Use the `convert_hf_to_gguf.py` script from `llama.cpp` to convert, ex.:
    ```
-   python3 "$ROBOT_COMMANDER_LLAMA_CPP_PATH"/convert_hf_to_gguf.py <path-to-downloaded-model-files> --outtype f16
+   python3 llama-convert_hf_to_gguf.py <path-to-downloaded-model-files> --outtype f16
    ```
 3. Quantize the converted model, ex.:
    ```
-   "$ROBOT_COMMANDER_LLAMA_CPP_PATH"/build/bin/llama-quantize <path-to-converted-file>/ggml-model-f16.gguf <path-to-quantized-file>/ggml-model-q4_0.gguf Q4_0
+   llama-quantize <path-to-converted-file>/ggml-model-f16.gguf <path-to-quantized-file>/ggml-model-q4_0.gguf Q4_0
    ```
 
 ***Bark***
@@ -96,11 +104,11 @@ This project requires all models to be downloaded and/or quantized manually befo
 > NOTE: The GGML format and quantization for bark are currently only experimental. Use the full pytorch models if you want the best results.
 2. Use the `convert.py` script from `bark.cpp` to convert, ex.:
    ```
-   python3 "$ROBOT_COMMANDER_BARK_CPP_PATH"/convert.py --dir-model <path-to-downloaded-model-files> --use-f16 && mv <path-to-converted-file>/ggml_weights.bin <path-to-converted-file>/ggml-model-f16.bin
+   python3 bark-convert.py --dir-model <path-to-downloaded-model-files> --use-f16 && mv <path-to-converted-file>/ggml_weights.bin <path-to-converted-file>/ggml-model-f16.bin
    ```
 3. Quantize the converted model, ex.:
    ```
-   "$ROBOT_COMMANDER_BARK_CPP_PATH"/build/examples/quantize/quantize <path-to-converted-file>/ggml-model-f16.bin <path-to-quantized-file>/ggml-model-q4_0.bin q4_0
+   bark-quantize <path-to-converted-file>/ggml-model-f16.bin <path-to-quantized-file>/ggml-model-q4_0.bin q4_0
    ```
 
 ## Usage
@@ -111,10 +119,11 @@ This project requires all models to be downloaded and/or quantized manually befo
    ```bash
    SUNO_USE_SMALL_MODELS=True ros2 launch robot_commander_py commanders.launch.py
    ```
-   > If you have enough memory to hold the full Bark models, you can disable the `SUNO_USE_SMALL_MODELS` option. Please refer to the [Bark](https://github.com/suno-ai/bark?tab=readme-ov-file#how-much-vram-do-i-need) README for more details.
+   > If you have enough memory to hold the full Bark models, you can disable the `SUNO_USE_SMALL_MODELS` option. If you want to use CUDA support with Bark, specify the `SUNO_OFFLOAD_CPU` option. Please refer to the [Bark](https://github.com/suno-ai/bark?tab=readme-ov-file#how-much-vram-do-i-need) README for more details.
 
    > NOTE: Local quantized Bark TTS agent server is currently only experimental. For best results, use the raw pytorch models, which do not support a server mode, and must be loaded dynamically for each request. To use the TTS server host, disable the `use_pytorch` parameter for the chat commander `text_to_speech` section.
 4. Start providing voice commands in natural language using a "push-to-talk" interface exposed through the `/record_prompt` topic.
+   >NOTE: If you want to use the included gamepad interface node, use the `launch_with_gamepad:=True` argument.
 
 ### Local model servers
 

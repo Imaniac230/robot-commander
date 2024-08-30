@@ -1,13 +1,17 @@
 repositories:
-  llama_cpp:
+  llama_cpp/llama_cpp:
     type: git
     url: https://github.com/ggerganov/llama.cpp.git
     version: b3631
-  whisper_cpp:
+  whisper_cpp/whisper_cpp:
     type: git
     url: https://github.com/ggerganov/whisper.cpp.git
     version: v1.6.2
-  bark_cpp:
+  bark_cpp/bark_cpp:
     type: git
     url: https://github.com/Imaniac230/bark.cpp.git
     version: oai-compatible-endpoint
+  bark:
+    type: git
+    url: https://github.com/Imaniac230/bark.git
+    version: main

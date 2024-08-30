@@ -98,34 +98,28 @@ class Bark(TTS):
 class BarkCPP(TTS):
     def __init__(self, params: TTSParams) -> None:
         super().__init__(params)
-        #TODO(bin-path): decide if we want to support installed bins as well
-        self.library_path: str = os.getenv("ROBOT_COMMANDER_BARK_CPP_PATH", "")
-        if not self.library_path: raise EnvironmentError("Required variable ROBOT_COMMANDER_BARK_CPP_PATH was not found.")
-        self.bin_path: str = "build/examples"
-        self.server_task = lambda : sp.Popen(self._build_command("server"))
+        self.server_task = lambda : sp.Popen(self._build_command("bark-server"))
 
     def _build_command(self, command: str, prompt: str = "") -> List[str]:
-        full_command: str = self.library_path + '/' + self.bin_path + '/' + command + '/' + command
-
         # implicit params
         # configurable params (required)
         args: List[str] = ["--model", self.params.model_path]
         # configurable params (optional, default by bark.cpp implementation)
         if self.params.n_of_threads_to_use is not None: args += ["--threads", str(self.params.n_of_threads_to_use)]
 
-        if command == "server":
+        if command == "bark-server":
             if self.params.server_hostname is not None: args += ["--address", self.params.server_hostname]
             if self.params.server_port is not None: args += ["--port", str(self.params.server_port)]
-        elif command == "main":
+        elif command == "bark-main":
             args += ["--prompt", prompt, "--outwav", self.generated_file]
         else:
             raise NotImplementedError(f"command '{command}' is not supported")
 
-        return [full_command] + args
+        return [command] + args
 
     def synthesize(self, prompt: str, load_model: bool = False) -> Any:
         #NOTE: the example main always stores the output into a wav file
-        if load_model: sp.check_output(self._build_command("main", prompt))
+        if load_model: sp.check_output(self._build_command("bark-main", prompt))
         else:
             #TODO(failed-server): decide how to react if server is not alive at this point
             if self.server_running():

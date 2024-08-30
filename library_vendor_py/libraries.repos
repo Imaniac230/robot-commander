@@ -1,5 +1,0 @@
-repositories:
-  bark:
-    type: git
-    url: https://github.com/Imaniac230/bark.git
-    version: main
