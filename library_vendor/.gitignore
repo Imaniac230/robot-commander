@@ -1,5 +1,5 @@
-whisper_cpp/whisper_cpp/
-llama_cpp/llama_cpp/
-bark_cpp/bark_cpp/
+whisper_cpp_vendored/whisper_cpp/
+llama_cpp_vendored/llama_cpp/
+bark_cpp_vendored/bark_cpp/
 
 bark/
