@@ -27,15 +27,15 @@ This project currently supports requests to public OpenAI and Anthropic API serv
    ```
 3. This project relies on the independent `robot_commander_library` package located in `library_vendor/`. The other external projects listed in `library_vendor/libraries.repos` are required for usage with local models only (if you're only going to make requests to external servers, you only need `robot_commander_library`). The `input` package is also optional, and provides a gamepad interface with support for additional interactions with the DualSense PS5 controller. To download all the external libraries use the `library_vendor_setup.sh` script (or run the included commands manually):
    ```bash
-   ./library_vendor_setup.sh
+   cd robot-commander/ && ./library_vendor_setup.sh
    ```
 4. Build the packages:
    ```bash
-    cd robot-commander/ && colcon build
+    colcon build
    ```
    >NOTE: If you want to build the .cpp libraries with CUDA support enable the USE_CUDA option:
    ```bash
-   cd robot-commander/ && colcon build --cmake-args -DUSE_CUDA=ON
+   colcon build --cmake-args -DUSE_CUDA=ON
    ```
    >NOTE: If you want to compile `llama.cpp` and `whisper.cpp` with different options than defined in this project, please refer to their respective instructions for more detailed compilation steps.
    >NOTE: Building the python `Bark` package might currently fail, in which case you will have to install it locally using pip:
