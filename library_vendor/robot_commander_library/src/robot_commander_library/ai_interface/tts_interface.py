@@ -60,8 +60,9 @@ class TTS:
 
 
 class Bark(TTS):
-    def __init__(self, params: TTSParams) -> None:
+    def __init__(self, params: TTSParams, preload_model: bool = False) -> None:
         super().__init__(params)
+        if preload_model: self.synthesize_short("a")
 
     def synthesize_short(self, short_prompt: str) -> Any:
         self.last_generation = generate_audio(short_prompt, history_prompt=self.params.voice,

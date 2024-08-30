@@ -18,6 +18,7 @@ class ChatCommander(CommanderActionServerInterface):
         self.initialize()
 
         if self.commander is None: raise RuntimeError("Commander was not initialized.")
+        self.get_logger().info("Chat commander action server node initialized.")
 
         self._action_server = ActionServer(self, Respond, 'respond_chat', self.action_callback)
 

@@ -90,7 +90,8 @@ class CommanderActionServerInterface(Node):
             if self.get_parameter('text_to_speech.use_pytorch').get_parameter_value().bool_value:
                 model_path: str = self.get_parameter('text_to_speech.pytorch_model_path').get_parameter_value().string_value
                 if not model_path or not Path(model_path).is_dir(): raise ValueError(f"Text-to-speech pytorch model loading is enabled, but the provided model path '{model_path}' was not found.")
-                self.pytorch_tts = Bark(TTSParams(model_path=model_path, voice=tts_voice if tts_voice else "announcer"))
+                self.get_logger().info("Pre-loading the text-to-speech model to memory with an empty prompt.")
+                self.pytorch_tts = Bark(TTSParams(model_path=model_path, voice=tts_voice if tts_voice else "announcer"), preload_model=True)
 
         self.commander = Commander(
             HostProvider(

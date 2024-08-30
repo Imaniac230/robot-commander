@@ -23,6 +23,7 @@ class GoalCommander(CommanderActionServerInterface):
         if self.commander.api.params.tts_host is not None:
             raise RuntimeError("Commander was initialized with a text-to-speech host, but it is not supported by this node.")
         if self.pytorch_tts is not None: self.get_logger().warning("A text-to-speech pytorch model was initialized, but it will not be used by this node.")
+        self.get_logger().info("Goal commander action server node initialized.")
 
         self._goal_publisher = self.create_publisher(PoseStamped, 'goal_pose', 10)
         self._action_server = ActionServer(self, Respond, 'respond_goal', self.action_callback)
