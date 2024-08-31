@@ -6,14 +6,19 @@ function scriptRootDir() {
   echo "$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 }
 
-library_vendor_path="$(scriptRootDir)/library_vendor"
-inputPath="$library_vendor_path/input"
+libraryVendorPath="$(scriptRootDir)/library_vendor"
+inputPath="$libraryVendorPath/input"
+barkCppPath="$libraryVendorPath/bark_cpp_vendored/bark_cpp"
 
-echo -e "\nDownloading external libraries ...\n\n"
-vcs import "$library_vendor_path" < "$library_vendor_path"/libraries.repos || { echo "Failed to download external libraries !"; exit 1; }
-pushd "$library_vendor_path/bark_cpp/bark_cpp" || { echo "ERROR: Could not push into the '$library_vendor_path/bark_cpp/bark_cpp' directory."; exit 1; }
+echo -e "\n\nDownloading external libraries ...\n"
+vcs import "$libraryVendorPath" < "$libraryVendorPath"/libraries.repos || { echo "Failed to download external libraries !"; exit 1; }
+
+echo -e "\n\nInitializing submodules for 'bark.cpp' ...\n"
+pushd "$barkCppPath" || { echo "ERROR: Could not push into the '$barkCppPath' directory."; exit 1; }
 git submodule update --init --recursive
-popd || { echo "ERROR: Could not pop out of the '$library_vendor_path/bark_cpp/bark_cpp' directory."; exit 1; }
+popd || { echo "ERROR: Could not pop out of the '$barkCppPath' directory."; exit 1; }
 
+echo -e "\n\nDownloading dependencies for 'input' ...\n"
 vcs import "$inputPath" < "$inputPath"/libraries.repos || { echo "Failed to download dualsense library !"; exit 1; }
-echo -e "\nLibraries downloaded.\n"
+
+echo -e "\n\nAll libraries downloaded.\n"
