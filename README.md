@@ -38,11 +38,6 @@ This project currently supports requests to public OpenAI and Anthropic API serv
    colcon build --cmake-args -DUSE_CUDA=ON
    ```
    >NOTE: If you want to compile `llama.cpp` and `whisper.cpp` with different options than defined in this project, please refer to their respective instructions for more detailed compilation steps.
-
-   >NOTE: Building the python `Bark` package might currently fail, in which case you will have to install it locally using pip:
-   ```bash
-   cd library_vendor/bark && pip3 install .
-   ```
 5. Source the current ROS workspace:
    ```bash
    . install/setup.bash
