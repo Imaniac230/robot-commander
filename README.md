@@ -38,6 +38,7 @@ This project currently supports requests to public OpenAI and Anthropic API serv
    colcon build --cmake-args -DUSE_CUDA=ON
    ```
    >NOTE: If you want to compile `llama.cpp` and `whisper.cpp` with different options than defined in this project, please refer to their respective instructions for more detailed compilation steps.
+
    >NOTE: Building the python `Bark` package might currently fail, in which case you will have to install it locally using pip:
    ```bash
    cd library_vendor/bark && pip3 install .
@@ -117,9 +118,9 @@ This project requires all models to be downloaded and/or quantized manually befo
 2. Specify your commander parameters in `params/commander_params.yaml`.
 3. Launch the ROS commanders:
    ```bash
-   SUNO_USE_SMALL_MODELS=True ros2 launch robot_commander_py commanders.launch.py
+   SUNO_OFFLOAD_CPU=True SUNO_USE_SMALL_MODELS=True ros2 launch robot_commander_py commanders.launch.py
    ```
-   > If you have enough memory to hold the full Bark models, you can disable the `SUNO_USE_SMALL_MODELS` option. If you want to use CUDA support with Bark, specify the `SUNO_OFFLOAD_CPU` option. Please refer to the [Bark](https://github.com/suno-ai/bark?tab=readme-ov-file#how-much-vram-do-i-need) README for more details.
+   > If you have enough memory to hold the full Bark models, you can disable the `SUNO_USE_SMALL_MODELS` option. If you want to use CUDA support with Bark, you can disable the `SUNO_OFFLOAD_CPU` option. Please refer to the [Bark](https://github.com/suno-ai/bark?tab=readme-ov-file#how-much-vram-do-i-need) README for more details.
 
    > NOTE: Local quantized Bark TTS agent server is currently only experimental. For best results, use the raw pytorch models, which do not support a server mode, and must be loaded dynamically for each request. To use the TTS server host, disable the `use_pytorch` parameter for the chat commander `text_to_speech` section.
 4. Start providing voice commands in natural language using a "push-to-talk" interface exposed through the `/record_prompt` topic.
