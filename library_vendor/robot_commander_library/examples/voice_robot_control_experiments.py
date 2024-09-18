@@ -214,7 +214,7 @@ def local_example(system_init: Tuple[argparse.Namespace, roslibpy.Ros, Dict[str,
 
 
 if __name__ == '__main__':
-    base_path: str = str(Path(__file__).resolve().parent.parent.parent) + '/'
+    base_path: str = str(Path(__file__).resolve().parent.parent.parent.parent) + '/'
 
     # openai_example(init_factory())
     local_example(init_factory(), local_model_factory())

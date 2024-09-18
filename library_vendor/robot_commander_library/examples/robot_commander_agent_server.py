@@ -7,13 +7,13 @@ import netifaces as ni
 import argparse
 
 
-#TODO(ros): we can wrap this into a Python ros node and also expose all relevant parameters into the config,
+# TODO(ros): we can wrap this into a Python ros node and also expose all relevant parameters into the config,
 #   net-interface, ports, model-paths, grammar-files, initial-prompt-files, ...
 def launch_agents() -> None:
-    #TODO(redundant-agents): We wouldn't need two separate stt instances here, as they are identical,
+    # TODO(redundant-agents): We wouldn't need two separate stt instances here, as they are identical,
     #   but the current design doesn't support any cross-sharing between independent agents.
     #   If the requests are made from an external requestor (which should be the target case), then one of them could be omitted.
-    ros_agent = Agent(
+    Agent(
         WhisperCPP(STTParams(
             model_path=args.stt_model_file,
             initial_prompt="",
@@ -32,7 +32,7 @@ def launch_agents() -> None:
         ))
     ).launch()
 
-    chat_agent = Agent(
+    Agent(
         WhisperCPP(STTParams(
             model_path=args.stt_model_file,
             initial_prompt="",
@@ -48,10 +48,10 @@ def launch_agents() -> None:
             server_port=8083,
             n_of_parallel_server_requests=1
         )),
-        #TODO(tts-server): local tts server is only experimental for now, refactor once a stable release is available
+        # TODO(tts-server): local tts server is only experimental for now, refactor once a stable release is available
         BarkCPP(TTSParams(
             model_path=args.tts_model_file,
-            voice=args.tts_voice,# not used by local server yet
+            voice=args.tts_voice,  # not used by local server yet
             server_hostname=ni.ifaddresses(args.net_interface)[ni.AF_INET][0]['addr'],
             server_port=8084
         ))
@@ -69,6 +69,9 @@ if __name__ == "__main__":
     parser.add_argument('--personality_context', type=str, default=None, help='Additional information about the agent personality.')
     args: argparse.Namespace = parser.parse_args()
 
-    base_path: str = str(Path(__file__).resolve().parent.parent.parent) + '/'
+    base_path: str = str(Path(__file__).resolve().parent.parent.parent.parent) + '/'
 
     launch_agents()
+
+    import time
+    while True: time.sleep(0.5)

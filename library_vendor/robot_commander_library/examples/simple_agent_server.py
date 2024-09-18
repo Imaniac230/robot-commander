@@ -38,3 +38,6 @@ if __name__ == "__main__":
             server_port=8082
         ))
     ).launch()
+
+    import time
+    while True: time.sleep(0.5)

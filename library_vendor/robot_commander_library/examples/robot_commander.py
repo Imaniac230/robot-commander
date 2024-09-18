@@ -143,7 +143,7 @@ if __name__ == "__main__":
     ros_client = roslibpy.Ros(host=args.ros_host, port=args.ros_port)
     ros_client.run()
 
-    base_path: str = str(Path(__file__).resolve().parent.parent.parent) + '/'
+    base_path: str = str(Path(__file__).resolve().parent.parent.parent.parent) + '/'
 
     handle_requests()
 

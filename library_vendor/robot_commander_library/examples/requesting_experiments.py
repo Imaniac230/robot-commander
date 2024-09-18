@@ -98,7 +98,7 @@ def anthropic_support() -> None:
     if result is not None: print(f"{result['choices'][0]['message']['content']}")
 
     print("\nposting to local server ...")
-    result = Requestor("http://" + args.local_address + ":8081").respond("/v1/chat/completions", {"messages": [{"role": "user", "content": "what is an omelette?"}]})
+    result = Requestor("http://" + args.local_address + ":8083").respond("/v1/chat/completions", {"messages": [{"role": "user", "content": "what is an omelette?"}]})
     if result is not None: print(f"{result['choices'][0]['message']['content']}")
 
 
