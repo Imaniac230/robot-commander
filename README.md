@@ -12,6 +12,17 @@ Local model support will be relying heavily on [llama.cpp](https://github.com/gg
 
 This project currently supports requests to public OpenAI and Anthropic API servers. To be able to access their APIs you must have an account at [OpenAI](https://auth.openai.com/authorize?issuer=auth0.openai.com&client_id=DRivsnm2Mu42T3KOpqdtwB3NYviHYzwD&audience=https%3A%2F%2Fapi.openai.com%2Fv1&redirect_uri=https%3A%2F%2Fplatform.openai.com%2Fauth%2Fcallback&device_id=a903c544-9857-457c-b6e4-6368120a61bf&max_age=0&scope=openid+profile+email+offline_access&response_type=code&response_mode=query&state=NWxSdi5CNmxQZGpfekFIc0o5QnJVTmlaekhvTHdDMkdZSUh5OGp2RHB2Nw%3D%3D&nonce=R2pzTnVaV3FXQl9FQWZWLmZuUH5RUWU2a29qY3EwQWVLZnV3TjFCMmh3aQ%3D%3D&code_challenge=XEjn1HVfmPdUSE-8GAuCi0WrvryWEWqSWtI82gt4BFQ&code_challenge_method=S256&auth0Client=eyJuYW1lIjoiYXV0aDAtc3BhLWpzIiwidmVyc2lvbiI6IjEuMjEuMCJ9&flow=control), and/or [Anthropic](https://console.anthropic.com/login) with a valid payment method set.
 
+## Results
+
+>TODO: add some example demonstration results (video?)
+
+## Shortcomings and TODOs
+
+1. The current design only translates prompts with pre-defined keywords into exact pose messages. Some feedback context about the current state could be included (similar to RAG) to allow for handling more complex prompts.
+2. The known keyword poses are currently statically defined in a file. This should instead be a dynamic structure that could be expanded during runtime, while also utilizing more advanced algorithms for any relevant key point detection.
+3. The ROS interface currently only supports generating `PoseStamped` commands. Integration of other message types and some decision-making for more complex behaviors might be useful, but it will not be a high priority for now.
+4. The state of quantization for TTS is currently not fully developed. This will have to be managed by the external project owners, unless we want to do the contributions ourselves.
+
 ## Setup
 
 ### Build
@@ -130,10 +141,6 @@ To launch the locally hosted agent servers:
    ```bash
    ros2 launch robot_commander_py agents.launch.py
    ```
-
-## Results
-
->TODO: add some example demonstration results (video?)
 
 ## Other examples
 
