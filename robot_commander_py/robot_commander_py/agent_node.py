@@ -28,6 +28,7 @@ class AgentServer(Node):
         if is_ros: self.declare_parameter('language_model.ros_messages_path', '')
         self.declare_parameter('language_model.initial_prompt_file', '')
         self.declare_parameter('language_model.initial_prompt_context', '')
+        self.declare_parameter('language_model.context_size_tokens', 0)
         self.declare_parameter('language_model.max_output_tokens', -1)
         self.declare_parameter('language_model.gpu_offload_layers', 0)
 
@@ -50,6 +51,12 @@ class AgentServer(Node):
         agent_type: str = self.get_parameter('type').get_parameter_value().string_value
         llm_init_file: str = self.get_parameter('language_model.initial_prompt_file').get_parameter_value().string_value
         llm_context: str = self.get_parameter('language_model.initial_prompt_context').get_parameter_value().string_value
+
+        llm_context_size: int = self.get_parameter('language_model.context_size_tokens').get_parameter_value().integer_value
+        # 0 -> loaded from model hparams
+        if llm_context_size < 0:
+            self.get_logger().warning(f"Invalid language model 'context_size_tokens' value specified: {llm_context_size}, defaulting to 0 (loaded from model parameters).")
+            llm_context_size = 0
 
         llm_max_tokens: int = self.get_parameter('language_model.max_output_tokens').get_parameter_value().integer_value
         # -2 -> until context filled, -1 -> infinite
@@ -90,6 +97,7 @@ class AgentServer(Node):
             LlamaCPP(LLMParams(
                 model_path=llm,
                 initial_prompt=llm_init,
+                context_size=llm_context_size,
                 n_of_tokens_to_predict=llm_max_tokens,
                 n_of_gpu_layers_to_offload=llm_gpu_layers,
                 server_hostname=hostname,

@@ -5,13 +5,14 @@ chat_agent:
 
     speech_to_text:
       port: 8082
-      model_file: /media/user/data_ssd/models/whisper/large/ggml-model-q4_0-large-v3.bin
+      model_file: /media/user/data_ssd/models/whisper/large/ggml-model-q2_k-large-v3.bin
 
     language_model:
       port: 8083
-      model_file: /media/user/data_ssd/models/llama3/hf/Meta-Llama-3-8B-Instruct/ggml-model-q4_0.gguf
+      model_file: /media/user/data_ssd/models/llama3/hf/Meta-Llama-3.1-8B-Instruct/ggml-model-q2_k.gguf
       initial_prompt_file: /home/user/Work/ROS/github/local/robot-commander/prompts/robot-chat.txt
       initial_prompt_context: "You are Loki, the god of mischief and you occasionally try to deceive the human. You are also a robot being controlled using ROS, and your witty remarks remain mostly within this context."
+      context_size_tokens: 32768
       max_output_tokens: 50
       gpu_offload_layers: 20 # this is used only if CUDA support is enabled
 
@@ -28,14 +29,15 @@ ros_agent:
 
     speech_to_text:
       port: 8080
-      model_file: /media/user/data_ssd/models/whisper/large/ggml-model-q4_0-large-v3.bin
+      model_file: /media/user/data_ssd/models/whisper/large/ggml-model-q2_k-large-v3.bin
 
     language_model:
       port: 8081
-      model_file: /media/user/data_ssd/models/llama3/hf/Meta-Llama-3-8B-Instruct/ggml-model-q4_0.gguf
+      model_file: /media/user/data_ssd/models/llama3/hf/Meta-Llama-3.1-8B-Instruct/ggml-model-q2_k.gguf
       initial_prompt_file: /home/user/Work/ROS/github/local/robot-commander/prompts/ros-publisher.txt
       ros_messages_path: /home/user/Work/ROS/github/local/robot-commander/messages/
       initial_prompt_context: "You are located inside a university campus building, which contains several laboratories that you can explore."
+      context_size_tokens: 32768
       max_output_tokens: 500
       gpu_offload_layers: 20 # this is used only if CUDA support is enabled
 

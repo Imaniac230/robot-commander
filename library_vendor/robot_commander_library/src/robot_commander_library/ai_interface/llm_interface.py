@@ -14,6 +14,7 @@ class LLMParams:
     model_path: str
     initial_prompt: str
     n_of_tokens_to_predict: int
+    context_size: Optional[int] = None
     temperature: Optional[float] = None
     n_of_gpu_layers_to_offload: Optional[int] = None
     json_schema_file_path: Optional[str] = None
@@ -64,11 +65,10 @@ class LlamaCPP(LLM):
 
     def _build_command(self, command: str, prompt: str = "") -> List[str]:
         # implicit params
-        # load context size from model hparams
-        args: List[str] = ["--ctx-size", str(0)]
         # configurable params (required)
-        args += ["--model", self.params.model_path, "--n-predict", str(self.params.n_of_tokens_to_predict)]
+        args: List[str] = ["--model", self.params.model_path, "--n-predict", str(self.params.n_of_tokens_to_predict)]
         # configurable params (optional, default by llama.cpp implementation)
+        if self.params.context_size is not None: args += ["--ctx-size", str(self.params.context_size)] # default should be 0 -> load from model hparams
         if self.params.n_of_gpu_layers_to_offload is not None: args += ["--n-gpu-layers", str(self.params.n_of_gpu_layers_to_offload)]
         if self.params.n_of_threads_to_use is not None: args += ["--threads", str(self.params.n_of_threads_to_use), "--threads-batch", str(self.params.n_of_threads_to_use)]
 
