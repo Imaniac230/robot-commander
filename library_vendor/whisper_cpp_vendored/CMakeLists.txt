@@ -13,9 +13,10 @@ if (USE_CUDA)
 endif ()
 
 set(GGML_CUDA_F16 ${USE_CUDA})
+set(GGML_CUDA ${USE_CUDA})
+set(GGML_NATIVE ON)
+set(GGML_AVX512 OFF)
 #TODO(cmake-options): must be defined as options for older cmake specified in whisper.cpp -> cmake --help-policy CMP0077
-option(WHISPER_CUDA "" ${USE_CUDA})
-option(WHISPER_NO_AVX512 "" ON)
 option(WHISPER_BUILD_EXAMPLES "" ON)
 option(BUILD_SHARED_LIBS "" OFF)
 

@@ -2,11 +2,11 @@ repositories:
   llama_cpp_vendored/llama_cpp:
     type: git
     url: https://github.com/ggerganov/llama.cpp.git
-    version: b3631
+    version: b3782
   whisper_cpp_vendored/whisper_cpp:
     type: git
     url: https://github.com/ggerganov/whisper.cpp.git
-    version: v1.6.2
+    version: 5b1ce40fa882e9cb8630b48032067a1ed2f1534f
   bark_cpp_vendored/bark_cpp:
     type: git
     url: https://github.com/Imaniac230/bark.cpp.git
