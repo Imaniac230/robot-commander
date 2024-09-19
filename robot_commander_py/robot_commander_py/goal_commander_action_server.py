@@ -1,5 +1,5 @@
 from robot_commander_library.commander import CommanderState
-from robot_commander_library.utils import ROSPublisherContext
+from robot_commander_library.utils import PoseMessageContext
 from robot_commander_py import CommanderActionServerInterface, AgentType
 from robot_commander_interfaces.action import Respond
 
@@ -12,7 +12,6 @@ import rclpy
 from rclpy.action import ActionServer
 from rclpy.duration import Duration
 from rosidl_runtime_py.set_message import set_message_fields
-from rosidl_runtime_py.convert import message_to_ordereddict
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
 
@@ -35,7 +34,7 @@ class GoalCommander(CommanderActionServerInterface):
         self._goal_publisher = self.create_publisher(PoseStamped, 'goal_pose', 10)
         self._action_server = ActionServer(self, Respond, 'respond_goal', self.action_callback)
 
-        self.current_pose: Optional[PoseStamped] = None
+        self.current_pose: Optional[Odometry] = None
         self.last_received_pose = self.get_clock().now()
 
     def parse_feedback(self) -> Optional[str]:
@@ -43,24 +42,14 @@ class GoalCommander(CommanderActionServerInterface):
             self.get_logger().warning('Goal commander pose feedback was not received for more than 1 second, will not use pose as context.')
             self.current_pose = None
 
-        if self.current_pose is not None: return ROSPublisherContext(str(json.dumps(message_to_ordereddict(self.current_pose))), self.ros_messages_dir).context()
+        #TODO(robot-feedback): decide if we're ever actually going to need the whole odometry message
+        if self.current_pose is not None: return PoseMessageContext(json.dumps({"frame_id": self.current_pose.child_frame_id}), self.ros_messages_dir).context()
         return None
 
     def odometry_callback(self, msg: Odometry):
         # TODO(strict-time): decide if we should validate 'now - msg.header.stamp'
         self.last_received_pose = self.get_clock().now()
-
-        self.current_pose = PoseStamped()
-        self.current_pose.header.frame_id = msg.header.frame_id
-        # self.current_pose.pose = msg.pose.pose
-        # TODO(float-rounding): isn't there a cleaner way for doing this?
-        self.current_pose.pose.position.x = round(msg.pose.pose.position.x, 3)
-        self.current_pose.pose.position.y = round(msg.pose.pose.position.y, 3)
-        self.current_pose.pose.position.z = round(msg.pose.pose.position.z, 3)
-        self.current_pose.pose.orientation.x = round(msg.pose.pose.orientation.x, 3)
-        self.current_pose.pose.orientation.y = round(msg.pose.pose.orientation.y, 3)
-        self.current_pose.pose.orientation.z = round(msg.pose.pose.orientation.z, 3)
-        self.current_pose.pose.orientation.w = round(msg.pose.pose.orientation.w, 3)
+        self.current_pose = msg
 
     def action_callback(self, goal_handle):
         self.get_logger().info("Generating commands ...")

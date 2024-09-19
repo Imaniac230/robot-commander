@@ -4,7 +4,7 @@
       "sec": 0,
       "nanosec": 0
     },
-    "frame_id": "map"
+    "frame_id": ""
   },
   "pose": {
     "position": {
