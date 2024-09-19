@@ -43,7 +43,7 @@ class GoalCommander(CommanderActionServerInterface):
             self.get_logger().warning('Goal commander pose feedback was not received for more than 1 second, will not use pose as context.')
             self.current_pose = None
 
-        if self.current_pose is not None: return ROSPublisherContext(str(json.dumps(message_to_ordereddict(self.current_pose)))).context()
+        if self.current_pose is not None: return ROSPublisherContext(str(json.dumps(message_to_ordereddict(self.current_pose))), self.ros_messages_dir).context()
         return None
 
     def odometry_callback(self, msg: Odometry):
@@ -53,7 +53,7 @@ class GoalCommander(CommanderActionServerInterface):
         self.current_pose = PoseStamped()
         self.current_pose.header.frame_id = msg.header.frame_id
         # self.current_pose.pose = msg.pose.pose
-        #TODO(float-rounding): isn't there a cleaner way for doing this?
+        # TODO(float-rounding): isn't there a cleaner way for doing this?
         self.current_pose.pose.position.x = round(msg.pose.pose.position.x, 3)
         self.current_pose.pose.position.y = round(msg.pose.pose.position.y, 3)
         self.current_pose.pose.position.z = round(msg.pose.pose.position.z, 3)

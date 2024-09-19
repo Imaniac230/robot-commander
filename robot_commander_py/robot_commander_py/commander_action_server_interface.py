@@ -29,6 +29,7 @@ class CommanderActionServerInterface(Node):
         if agent_type == AgentType.ROS:
             self.declare_parameter('language_model.grammar_file', '')
             self.declare_parameter('language_model.ros_messages_path', '')
+            self.ros_messages_dir: str = ""
         self.declare_parameter('language_model.initial_prompt_file', '')
         self.declare_parameter('language_model.initial_prompt_context', '')
 
@@ -71,9 +72,10 @@ class CommanderActionServerInterface(Node):
                 if self.type == AgentType.CHAT:
                     system_prompt = RobotChat(llm_init_file, personality=llm_context if llm_context else None).prompt()
                 elif self.type == AgentType.ROS:
-                    ros_messages_dir: str = self.get_parameter('language_model.ros_messages_path').get_parameter_value().string_value
-                    if not ros_messages_dir or not Path(ros_messages_dir).is_dir(): self.get_logger().warn(f"Directory '{ros_messages_dir}' not found, ROS message definitions will not be specified.")
-                    system_prompt = ROSPublisher(llm_init_file, ros_messages_dir, environment=llm_context if llm_context else None).prompt()
+                    self.ros_messages_dir = self.get_parameter('language_model.ros_messages_path').get_parameter_value().string_value
+                    if not self.ros_messages_dir or not Path(self.ros_messages_dir).is_dir(): self.get_logger().warn(
+                        f"Directory '{self.ros_messages_dir}' not found, ROS message definitions will not be specified.")
+                    system_prompt = ROSPublisher(llm_init_file, self.ros_messages_dir, environment=llm_context if llm_context else None).prompt()
                 else:
                     self.get_logger.warn(f"Agent type '{self.type}' is not supported, a system prompt will not be created.")
             else:
