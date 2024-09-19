@@ -54,6 +54,9 @@ def launch_setup(context: LaunchContext) -> Optional[List[LaunchDescriptionEntit
         output='screen',
         emulate_tty=True,
         parameters=[configured_params],
+        remappings=[
+            ("odometry", "localization/odometry_filtered"),
+        ],
     )
 
     start_commander_action_client_node_cmd = Node(

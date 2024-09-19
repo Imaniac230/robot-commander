@@ -22,11 +22,11 @@ class RobotChat(SystemPrompt):
         if int(os.getenv("DEBUG", "0")) >= 2: print(f"full system prompt:\n{self._prompt}")
 
 
-
 class ROSPublisher(SystemPrompt):
     def __init__(self, file_path: str, messages_directory: str, environment: Optional[str] = None) -> None:
         super().__init__(file_path)
         messages = ""
+        # TODO(rag-prompts): the pose contexts should eventually be ported out into the PromptContext class
         contexts = ""
         if messages_directory and Path(messages_directory).is_dir():
             for file in glob.glob(str(Path(messages_directory).resolve()) + "/*.json"):
@@ -51,3 +51,19 @@ class ROSPublisher(SystemPrompt):
             self._prompt += f'Additional properties of the environment that you are operating in:\n{environment}\n\n'
 
         if int(os.getenv("DEBUG", "0")) >= 2: print(f"full system prompt:\n{self._prompt}")
+
+
+class PromptContext:
+    def __init__(self, data: str) -> None:
+        self._context = data
+
+    def context(self) -> str: return self._context
+
+
+class ROSPublisherContext(PromptContext):
+    def __init__(self, data: str) -> None:
+        super().__init__(data)
+        self._context = f'Your current state is:\n{self._context}\n'
+        self._context += 'Make sure to use this information when processing the next command.\n\n'
+
+        if int(os.getenv("DEBUG", "0")) >= 1: print(f"prompt context:\n{self._context}")

@@ -18,7 +18,7 @@ class LLMParams:
     temperature: Optional[float] = None
     n_of_gpu_layers_to_offload: Optional[int] = None
     json_schema_file_path: Optional[str] = None
-    grammar_file_path: Optional[str] = None #TODO(grammar): decide if we will actually still use this
+    grammar_file_path: Optional[str] = None  # TODO(grammar): decide if we will actually still use this
     server_hostname: Optional[str] = None
     server_port: Optional[int] = None
     n_of_parallel_server_requests: Optional[int] = None
@@ -49,7 +49,7 @@ class LLM:
             self.server_worker = None
         return self
 
-    def respond(self, prompt: str, *args, **kwargs) -> str: pass
+    def respond(self, prompt: str, prompt_context: Optional[str], *args, **kwargs) -> str: pass
 
 
 class LlamaCPP(LLM):
@@ -61,14 +61,14 @@ class LlamaCPP(LLM):
     # We shouldn't attempt to do anything like that here.
     def __init__(self, params: LLMParams) -> None:
         super().__init__(params)
-        self.server_task = lambda : sp.Popen(self._build_command("llama-server"))
+        self.server_task = lambda: sp.Popen(self._build_command("llama-server"))
 
     def _build_command(self, command: str, prompt: str = "") -> List[str]:
         # implicit params
         # configurable params (required)
         args: List[str] = ["--model", self.params.model_path, "--n-predict", str(self.params.n_of_tokens_to_predict)]
         # configurable params (optional, default by llama.cpp implementation)
-        if self.params.context_size is not None: args += ["--ctx-size", str(self.params.context_size)] # default should be 0 -> load from model hparams
+        if self.params.context_size is not None: args += ["--ctx-size", str(self.params.context_size)]  # default should be 0 -> load from model hparams
         if self.params.n_of_gpu_layers_to_offload is not None: args += ["--n-gpu-layers", str(self.params.n_of_gpu_layers_to_offload)]
         if self.params.n_of_threads_to_use is not None: args += ["--threads", str(self.params.n_of_threads_to_use), "--threads-batch", str(self.params.n_of_threads_to_use)]
 
@@ -77,11 +77,11 @@ class LlamaCPP(LLM):
             # publish server metrics
             args += ["--metrics"]
             # initial prompt must be specified in a file
-            #TODO(system-prompt): server readme specifies a json formatted file for the system prompt,
+            # TODO(system-prompt): server readme specifies a json formatted file for the system prompt,
             #   but the code seems to just pass the raw text contents as is without any json parsing
             # tmp = "/tmp/system_prompt.json"
             # with open(tmp, "w") as f: f.write(json.dumps({"system_prompt": {"prompt": self.params.initial_prompt, "anti_prompt": "Human:", "assistant_name": "Loki:"}}))
-            #TODO(system-prompt): decide how to approach this:
+            # TODO(system-prompt): decide how to approach this:
             #   each request in chat-completion "system" role? -> usable only with instruction fine tuned models with chat templates?
             #   this system_prompt? -> gets tokenized directly at the start without the special tokens? - only usable with with foundation models?
             from random import randint
@@ -101,7 +101,7 @@ class LlamaCPP(LLM):
             args += ["--keep", str(len(self.params.initial_prompt)), "--prompt", "\"" + prompt + "\""]
             # configurable params (optional, default by llama.cpp implementation)
             if self.params.temperature is not None: args += ["--temp", str(self.params.temperature)]
-            #TODO(grammar): currently using only schema, decide if we ever need to specify the grammar
+            # TODO(grammar): currently using only schema, decide if we ever need to specify the grammar
             # if self.params.grammar_file_path is not None: args += ["--grammar-file", self.params.grammar_file_path]
             if self.params.json_schema_file_path is not None:
                 with open(self.params.json_schema_file_path, 'r') as sch: args += ["--json-schema", json.dumps(json.load(sch))]
@@ -110,8 +110,9 @@ class LlamaCPP(LLM):
 
         return [command] + args
 
-    def respond(self, prompt: str, inline_response: bool = False, load_model: bool = False) -> str:
-        full_prompt: str = prompt if not self.params.initial_prompt else self.params.initial_prompt + 'REQUEST:\n' + prompt
+    def respond(self, prompt: str, prompt_context: Optional[str], inline_response: bool = False, load_model: bool = False) -> str:
+        ctx: str = prompt_context if prompt_context is not None else ""
+        full_prompt: str = ctx + prompt if not self.params.initial_prompt else self.params.initial_prompt + ctx + 'REQUEST:\n' + prompt
 
         if load_model:
             self.last_response = sp.check_output(self._build_command("llama-cli", full_prompt), text=True)
@@ -119,10 +120,10 @@ class LlamaCPP(LLM):
             if int(os.getenv("DEBUG", "0")) >= 2:
                 print(f"\nllm command full output:\n{self.last_response}\n")
         else:
-            #TODO(failed-server): decide how to react if server is not alive at this point
+            # TODO(failed-server): decide how to react if server is not alive at this point
             if self.server_running():
-                payload = {"messages": [{"role": "user", "content": "REQUEST:\n" + prompt}], "stop": ["REQUEST:"]}
-                #TODO(grammar): decide if we will handle both grammar and schema options
+                payload = {"messages": [{"role": "user", "content": ctx + "REQUEST:\n" + prompt}], "stop": ["REQUEST:"]}
+                # TODO(grammar): decide if we will handle both grammar and schema options
                 if self.params.json_schema_file_path is not None:
                     with open(self.params.json_schema_file_path, 'r') as sch: payload["response_format"] = {"type": "json_object", "schema": json.load(sch)}
 

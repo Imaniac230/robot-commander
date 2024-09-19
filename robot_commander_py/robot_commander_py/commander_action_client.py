@@ -141,7 +141,7 @@ class CommanderActionClient(Node):
         self.is_playing.store(int(False))
         self.get_logger().info("Chat response audio playback finished.")
 
-    def recording_callback(self, msg):
+    def recording_callback(self, msg: Bool):
         self.is_recording.store(int(msg.data))
 
     def publishing_timer_callback(self):

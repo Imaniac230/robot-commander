@@ -35,13 +35,14 @@ class Agent:
         if self.tts is not None: self.tts.stop_server()
         return self
 
-    def respond(self, audio_file: str, load_models: bool = False, playback_response: bool = False) -> Any:
-        text_response: str = self.llm.respond(self.stt.transcribe(audio_file, load_model=load_models), inline_response=True if self.tts is not None else False, load_model=load_models)
+    def respond(self, audio_file: str, prompt_context: Optional[str], load_models: bool = False, playback_response: bool = False) -> Any:
+        text_response: str = self.llm.respond(self.stt.transcribe(audio_file, load_model=load_models), prompt_context, inline_response=True if self.tts is not None else False, load_model=load_models)
         if self.tts is None: return text_response
 
         voice_response: Any = self.tts.synthesize(text_response, load_model=load_models)
         if playback_response: self.tts.play_synthesis()
         return voice_response
+
 
 @unique
 class CommanderState(Enum):
@@ -52,6 +53,7 @@ class CommanderState(Enum):
     PLAYING_RESPONSE = 4
     IDLE = 5
     ERROR = -1
+
 
 class Commander:
     def __init__(self, api: HostProvider, tts_generated_file: str = "output_response.wav") -> None:
@@ -65,7 +67,7 @@ class Commander:
 
         self.tts_generated_file: str = tts_generated_file
 
-    def respond(self, audio_file: str, playback_response: bool = False) -> Any:
+    def respond(self, audio_file: str, prompt_context: Optional[str] = None, playback_response: bool = False) -> Any:
         self.state = CommanderState.TRANSCRIBING
         stt_payload = self.api.stt_payload(audio_file)
         transcription = self.api.transcription(Requestor(self.api.params.stt_host, api_key=self.api.params.stt_api_key).transcribe(self.api.stt_endpoint, stt_payload[0], stt_payload[1]))
@@ -81,7 +83,7 @@ class Commander:
             print(f"\nreturned stt transcription:\n{self.last_transcription}\n")
 
         self.state = CommanderState.RESPONDING
-        llm_input: str = self.request_specifier + "\n" + self.last_transcription
+        llm_input: str = (prompt_context if prompt_context is not None else "") + self.request_specifier + "\n" + self.last_transcription
         llm_payload = self.api.llm_payload(llm_input, stop_strings=[self.request_specifier])
         response = self.api.response(Requestor(self.api.params.llm_host, api_key=self.api.params.llm_api_key).respond(self.api.llm_endpoint, llm_payload))
         if response is None:
