@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(robot_commander_interfaces)
+project(robot_commander_interfaces VERSION 0.0.1)
 
 # Default to C99
 if (NOT CMAKE_C_STANDARD)
@@ -18,12 +18,16 @@ endif ()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/State.msg"
+        "msg/PoseStampedKeyword.msg"
+        "msg/PoseStampedKeywordArray.msg"
+        "srv/UpdateContext.srv"
         "action/Respond.action"
-        DEPENDENCIES std_msgs
+        DEPENDENCIES std_msgs geometry_msgs
 )
 
 if (BUILD_TESTING)
