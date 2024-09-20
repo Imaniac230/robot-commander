@@ -38,3 +38,8 @@ ros_agent_commander:
       initial_prompt_file: /home/user/Work/ROS/github/local/robot-commander/prompts/ros-publisher.txt
       ros_messages_path: /home/user/Work/ROS/github/local/robot-commander/messages/
       initial_prompt_context: "You are located inside a university campus building, which contains several laboratories that you can explore."
+
+message_context_node:
+  ros__parameters:
+    pose_context_file_path: /home/user/Work/ROS/github/local/robot-commander/messages/contexts/posestamped.json
+    load_data_files: True
