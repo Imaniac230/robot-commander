@@ -69,6 +69,19 @@ def launch_setup(context: LaunchContext) -> Optional[List[LaunchDescriptionEntit
         parameters=[],
     )
 
+    start_commander_message_context_node_cmd = Node(
+        package='robot_commander_cpp',
+        executable='message_context_node',
+        name='message_context_node',
+        namespace=namespace,
+        output='screen',
+        emulate_tty=True,
+        parameters=[configured_params],
+        remappings=[
+            ("odometry", "localization/odometry_filtered"),
+        ],
+    )
+
     start_gamepad_node_cmd = Node(
         condition=IfCondition(launch_with_gamepad),
         package='input',
@@ -90,6 +103,7 @@ def launch_setup(context: LaunchContext) -> Optional[List[LaunchDescriptionEntit
     ld.add_action(start_chat_commander_action_server_node_cmd)
     ld.add_action(start_goal_commander_action_server_node_cmd)
     ld.add_action(start_commander_action_client_node_cmd)
+    ld.add_action(start_commander_message_context_node_cmd)
     ld.add_action(start_gamepad_node_cmd)
 
     return [ld]

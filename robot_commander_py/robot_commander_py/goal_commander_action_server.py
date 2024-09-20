@@ -2,6 +2,7 @@ from robot_commander_library.commander import CommanderState
 from robot_commander_library.utils import PoseMessageContext
 from robot_commander_py import CommanderActionServerInterface, AgentType
 from robot_commander_interfaces.action import Respond
+from robot_commander_interfaces.msg import PoseStampedKeywordArray
 
 from typing import Optional
 import threading as th
@@ -12,6 +13,7 @@ import rclpy
 from rclpy.action import ActionServer
 from rclpy.duration import Duration
 from rosidl_runtime_py.set_message import set_message_fields
+from rosidl_runtime_py.convert import message_to_ordereddict
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
 
@@ -31,10 +33,12 @@ class GoalCommander(CommanderActionServerInterface):
         self.get_logger().info("Goal commander action server node initialized.")
 
         self._odometry_subscription = self.create_subscription(Odometry, 'odometry', self.odometry_callback, 10)
+        self._pose_context_subscription = self.create_subscription(PoseStampedKeywordArray, 'pose_context', self.pose_context_callback, 10)
         self._goal_publisher = self.create_publisher(PoseStamped, 'goal_pose', 10)
         self._action_server = ActionServer(self, Respond, 'respond_goal', self.action_callback)
 
         self.current_pose: Optional[Odometry] = None
+        self.pose_context: Optional[PoseStampedKeywordArray] = None
         self.last_received_pose = self.get_clock().now()
 
     def parse_feedback(self) -> Optional[str]:
@@ -42,14 +46,23 @@ class GoalCommander(CommanderActionServerInterface):
             self.get_logger().warning('Goal commander pose feedback was not received for more than 1 second, will not use pose as context.')
             self.current_pose = None
 
-        #TODO(robot-feedback): decide if we're ever actually going to need the whole odometry message
-        if self.current_pose is not None: return PoseMessageContext(json.dumps({"frame_id": self.current_pose.child_frame_id}), self.ros_messages_dir).context()
+        # FIXME(pose-context-parsing): this should have its own formatting util
+        contexts: str = ""
+        if self.pose_context is not None:
+            # NOTE: must preserve the exact text formatting that works well
+            contexts = ''.join([('\n' + pose["keyword"] + ':\n' + json.dumps(pose["value"], indent=2) + '\n') for pose in message_to_ordereddict(self.pose_context)["poses"]])
+
+        # TODO(robot-feedback): decide if we're ever actually going to need the whole odometry message
+        if self.current_pose is not None: return PoseMessageContext(json.dumps({"frame_id": self.current_pose.child_frame_id}), contexts).context()
         return None
 
     def odometry_callback(self, msg: Odometry):
         # TODO(strict-time): decide if we should validate 'now - msg.header.stamp'
         self.last_received_pose = self.get_clock().now()
         self.current_pose = msg
+
+    def pose_context_callback(self, msg: PoseStampedKeywordArray):
+        self.pose_context = msg
 
     def action_callback(self, goal_handle):
         self.get_logger().info("Generating commands ...")

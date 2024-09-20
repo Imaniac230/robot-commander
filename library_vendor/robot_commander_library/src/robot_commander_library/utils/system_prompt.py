@@ -51,12 +51,8 @@ class PromptContext:
 
 
 class PoseMessageContext(PromptContext):
-    def __init__(self, data: str, messages_directory: str) -> None:
+    def __init__(self, data: str, contexts: str) -> None:
         super().__init__()
-        contexts = ""
-        if messages_directory and Path(messages_directory).is_dir():
-            for file in glob.glob(str(Path(messages_directory).resolve()) + "/contexts/*.txt"):
-                with open(file, 'r') as rd: contexts += rd.read() + "\n"
 
         if int(os.getenv("DEBUG", "0")) >= 1:
             print(f"context:\n{data}")

@@ -52,7 +52,7 @@ void MessageContextNode::onInitialize() {
     // so we define a single-use timer callback that will execute all registered publishing callbacks after the node is initialized
     // and then destroy itself
     initialPublishingTimer =
-            create_wall_timer(std::chrono::seconds(1), [this] { executeInitialPublishingCallbacks(); });
+            create_wall_timer(std::chrono::seconds(5), [this] { executeInitialPublishingCallbacks(); });
 
     RCLCPP_INFO(get_logger(), "Node initialized.");
 }
