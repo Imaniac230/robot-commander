@@ -18,10 +18,9 @@ This project currently supports requests to public OpenAI and Anthropic API serv
 
 ## Shortcomings and TODOs
 
-1. The current design only translates prompts with pre-defined keywords into exact pose messages. Some feedback context about the current state could be included (similar to RAG) to allow for handling more complex prompts.
-2. The known keyword poses are currently statically defined in a file. This should instead be a dynamic structure that could be expanded during runtime, while also utilizing more advanced algorithms for any relevant key point detection.
-3. The ROS interface currently only supports generating `PoseStamped` commands. Integration of other message types and some decision-making for more complex behaviors might be useful, but it will not be a high priority for now.
-4. The state of quantization for TTS is currently not fully developed. This will have to be managed by the external project owners, unless we want to do the contributions ourselves.
+1. The current design works best when translating prompts with defined keywords into exact pose messages. Some RAG-like feedback context about the current state could be included to allow for handling more complex prompts. This is currently a work-in-progress.
+2. The ROS interface currently only supports generating `PoseStamped` commands. Integration of other message types and some decision-making for more complex behaviors might be useful, but it will not be a high priority for now.
+3. The state of quantization for TTS is currently not fully developed. This will have to be managed by the external project owners, unless we want to do the contributions ourselves.
 
 ## Setup
 
@@ -29,7 +28,7 @@ This project currently supports requests to public OpenAI and Anthropic API serv
 
 1. Install system dependencies:
    ```bash
-   sudo apt install ninja-build portaudio19-dev
+   sudo apt install ninja-build portaudio19-dev nlohmann-json3-dev
    ```
    >NOTE: Also make sure you have installed ROS and the following dependencies: `python3-colcon-common-extensions`, `python3-rosdep`, and `python3-vcstool`.
 2. Download this repo and update ROS dependencies:
@@ -120,24 +119,30 @@ This project requires all models to be downloaded and/or quantized manually befo
 
 ## Usage
 
-1. Specify your "keyword" contexts for the `PoseStamped` ROS message in `messages/contexts/posestamped.txt`.
-2. Specify your commander parameters in `params/commander_params.yaml`.
-3. Launch the ROS commanders:
+1. Specify your commander parameters in `params/commander_params.yaml`.
+2. Launch the ROS commanders:
    ```bash
    SUNO_OFFLOAD_CPU=True SUNO_USE_SMALL_MODELS=True ros2 launch robot_commander_py commanders.launch.py
    ```
    > If you have enough memory to hold the full Bark models, you can disable the `SUNO_USE_SMALL_MODELS` option. If you want to use CUDA support with Bark, you can disable the `SUNO_OFFLOAD_CPU` option. Please refer to the [Bark](https://github.com/suno-ai/bark?tab=readme-ov-file#how-much-vram-do-i-need) README for more details.
 
    > NOTE: Local quantized Bark TTS agent server is currently only experimental. For best results, use the raw pytorch models, which do not support a server mode, and must be loaded dynamically for each request. To use the TTS server host, disable the `use_pytorch` parameter for the chat commander `text_to_speech` section.
-4. Start providing voice commands in natural language using a "push-to-talk" interface exposed through the `/record_prompt` topic.
+3. Start providing voice commands in natural language using a "push-to-talk" interface exposed through the `/record_prompt` topic.
    >NOTE: If you want to use the included gamepad interface node, use the `launch_with_gamepad:=True` argument.
+4. To update the pose "keyword" mappings with the current robot position call the `update_pose_context` ROS service:
+   ```bash
+   ros2 service call /update_pose_context robot_commander_interfaces/srv/UpdateContext "{"keyword": "home"}"
+   ```
+5. To store the current pose "keyword" mappings into the specified file call the `save_contexts` ROS service:
+   ```bash
+   ros2 service call /save_contexts std_srvs/srv/Trigger
+   ```
 
 ### Local model servers
 
 To launch the locally hosted agent servers:
-1. Specify your "keyword" contexts for the `PoseStamped` ROS message in `messages/contexts/posestamped.txt`.
-2. Specify your agent parameters in `params/agent_params.yaml`.
-3. Launch the local agent servers:
+1. Specify your agent parameters in `params/agent_params.yaml`.
+2. Launch the local agent servers:
    ```bash
    ros2 launch robot_commander_py agents.launch.py
    ```
