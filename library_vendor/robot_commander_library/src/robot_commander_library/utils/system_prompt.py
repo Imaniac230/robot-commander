@@ -63,15 +63,74 @@ class PoseMessageContext(PromptContext):
             self._context += 'Make sure you always match all JSON property values exactly each time the task relates to the corresponding keyword.\n\n'
 
         self._context += f'Your current body frame context is:\n{data}\n'
-        self._context += 'Additional context for filling values of the "position" JSON property from the request:\n'
-        #TODO: this is not very reliable, we should instead simplify the generation messages and make static translation utils for all supported ROS message types
-        self._context += 'forward: {"x": positive value}\n'
-        self._context += 'backward: {"x": negative value}\n'
-        self._context += 'left: {"y": positive value}\n'
-        self._context += 'right: {"y": negative value}\n'
-        self._context += 'up: {"z": positive value}\n'
-        self._context += 'down: {"z": negative value}\n'
-        # self._context += 'By the right hand rule, the yaw component of orientation always increases as the frame rotates counter-clockwise.\n'
+        self._context += 'The following lines provide additional context for assigning values to the "position" JSON property, when the task is not related to any keyword:\n'
+        # TODO(message-context): this is currently only for translational movement, we probably shouldn't expect the llm to interpret quaternion rotations,
+        # decide if we shouldn't reduce this into more interpretable commands and make static translation utils for all supported ROS message types instead
+        self._context += '''
+        translation forward and backward:
+        "header": {
+            "stamp": {
+            "sec": 0,
+            "nanosec": 0
+            },
+            "frame_id": "decide based on the given body frame context"
+        },
+        "pose": {
+            "position": {
+                "x": "value",
+                "y": 0.0,
+                "z": 0.0
+            },
+            "orientation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+            }
+        }
+        translation leftward and rightward:
+        "header": {
+            "stamp": {
+            "sec": 0,
+            "nanosec": 0
+            },
+            "frame_id": "decide based on the given body frame context"
+        },
+        "pose": {
+            "position": {
+                "x": 0.0,
+                "y": "value",
+                "z": 0.0
+            },
+            "orientation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+            }
+        }
+        translation upward and downward:
+        "header": {
+            "stamp": {
+            "sec": 0,
+            "nanosec": 0
+            },
+            "frame_id": "decide based on the given body frame context"
+        },
+        "pose": {
+            "position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": "value"
+            },
+            "orientation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+            }
+        }
+        '''
         self._context += 'Make sure to always use this information when the task does not correspond to a specific keyword.\n\n'
 
         if int(os.getenv("DEBUG", "0")) >= 2: print(f"full prompt context:\n{self._context}")
