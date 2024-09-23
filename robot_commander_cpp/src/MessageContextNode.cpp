@@ -7,7 +7,7 @@ using namespace std::chrono_literals;
 
 MessageContextNode::MessageContextNode() : rclcpp::Node("message_context_node") {
     declare_parameter(MessageContextNodeParameters::poseContextFilePath, rclcpp::ParameterValue(""));
-    declare_parameter(MessageContextNodeParameters::loadDataFiles, rclcpp::ParameterValue(false));
+    declare_parameter(MessageContextNodeParameters::loadPoseContextFile, rclcpp::ParameterValue(false));
 
     onInitialize();
 }
@@ -16,16 +16,15 @@ void MessageContextNode::onInitialize() {
     RCLCPP_INFO(get_logger(), "Starting the message context node.");
 
     std::string poseContextFile = get_parameter(MessageContextNodeParameters::poseContextFilePath).as_string();
-    bool filenameGiven = true;
     if (poseContextFile.empty()) {
         std::ostringstream oss("posestamped_", std::ios_base::ate);
         oss << std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         poseContextFile = oss.str();
         RCLCPP_WARN(get_logger(), "ROS parameter '%s' was not provided, setting name to '%s'",
                     MessageContextNodeParameters::poseContextFilePath, poseContextFile.c_str());
-        filenameGiven = false;
     }
     contexts.emplace_back(poseContextFile, robot_commander_interfaces::msg::PoseStampedKeywordArray());
+    loadFromFile.push_back(get_parameter(MessageContextNodeParameters::loadPoseContextFile).as_bool());
 
     RCLCPP_INFO(get_logger(), "Initializing subscribers.");
     odometrySubscription = create_subscription<nav_msgs::msg::Odometry>(
@@ -43,10 +42,10 @@ void MessageContextNode::onInitialize() {
             "save_contexts",
             std::bind(&MessageContextNode::saveContextFiles, this, std::placeholders::_1, std::placeholders::_2));
 
-    if (get_parameter(MessageContextNodeParameters::loadDataFiles).as_bool() && filenameGiven) {
+    if (std::find(loadFromFile.begin(), loadFromFile.end(), true) != loadFromFile.end()) {
         RCLCPP_INFO(get_logger(), "Loading context data from given files.");
         if (loadDataFiles() != LoadStatus::Success) RCLCPP_WARN(get_logger(), "Failed to load some data files.");
-    };
+    }
 
     //NOTE: we want to publish the contexts as they are loaded from files, but we cannot do that directly from this constructor,
     // so we define a single-use timer callback that will execute all registered publishing callbacks after the node is initialized
@@ -62,8 +61,6 @@ void MessageContextNode::odometryCallback(const nav_msgs::msg::Odometry::SharedP
 void MessageContextNode::updateContexts(
         const robot_commander_interfaces::srv::UpdateContext::Request::SharedPtr request,
         const robot_commander_interfaces::srv::UpdateContext::Response::SharedPtr response) {
-    //TODO(multiple-context-handling): think about handling this if we actually start managing multiple different
-    // message types as contexts
     response->success = false;
     response->message = "In progress ...";
 
@@ -106,20 +103,24 @@ void MessageContextNode::updateContexts(
 
 MessageContextNode::LoadStatus MessageContextNode::loadDataFiles() {
     LoadStatus status = LoadStatus::Failed;
-    for (auto &c: contexts) {
-        if (!c.first.empty()) {
+
+    if (contexts.size() != loadFromFile.size()) return status;
+
+    for (std::pair<std::string, ContextType> &c: contexts) {
+        if (!c.first.empty() && loadFromFile[(&c - &(*contexts.begin()))]) {
             std::ifstream file(c.first);
-            nlohmann::json context;
+            nlohmann::json jsonContext;
             try {
-                file >> context;
+                file >> jsonContext;
             } catch (...) {
                 RCLCPP_ERROR(get_logger(), "Failed to load context data from file '%s'.", c.first.c_str());
                 if (status == LoadStatus::Success) status = LoadStatus::PartialSuccess;
                 continue;
             }
+
             if (std::holds_alternative<robot_commander_interfaces::msg::PoseStampedKeywordArray>(c.second)) {
                 auto &poses = std::get<robot_commander_interfaces::msg::PoseStampedKeywordArray>(c.second);
-                for (const auto &pose: context) { poses.poses.emplace_back(pose); }
+                for (const auto &pose: jsonContext) { poses.poses.emplace_back(pose); }
 
                 initialPublishingCallbacks.emplace_back([this, &poses]() { poseContextPublisher->publish(poses); });
 
@@ -137,15 +138,16 @@ void MessageContextNode::saveContextFiles(const std_srvs::srv::Trigger::Request:
     response->message = "";
 
     for (const std::pair<std::string, ContextType> &c: contexts) {
-        std::ofstream file;
-        file.open(c.first);
-        file << c.second;
-        file.close();
+        if (!c.first.empty()) {
+            std::ofstream file;
+            file.open(c.first);
+            file << c.second;
+            file.close();
 
-        response->message += "File '" + c.first + "' saved. ";
+            response->message += "File '" + c.first + "' saved. ";
+            response->success = true;
+        }
     }
-
-    response->success = true;
 }
 
 std::ofstream &operator<<(std::ofstream &file, const MessageContextNode::ContextType &context) {

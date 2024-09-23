@@ -16,7 +16,7 @@
 
 namespace MessageContextNodeParameters {
     static constexpr auto poseContextFilePath = "pose_context_file_path";
-    static constexpr auto loadDataFiles = "load_data_files";
+    static constexpr auto loadPoseContextFile = "load_pose_context_file";
 }// namespace MessageContextNodeParameters
 
 class MessageContextNode : public rclcpp::Node {
@@ -55,7 +55,11 @@ private:
     rclcpp::Publisher<robot_commander_interfaces::msg::PoseStampedKeywordArray>::SharedPtr poseContextPublisher;
 
     nav_msgs::msg::Odometry odometry{};
+
+    //TODO(multiple-context-handling): rethink this once we actually start managing multiple different message types
+    // as contexts
     Contexts contexts{};
+    std::vector<bool> loadFromFile{};
 
     std::list<std::function<void()>> initialPublishingCallbacks;
 
@@ -64,8 +68,8 @@ private:
     rclcpp::QoS qosSetting = rclcpp::QoS(10);
 };
 
-//TODO(file-storage): find out if there isn't a more straightforward way of doing all of this,
-// use bag files or other standard formats instead?
+//TODO(file-storage): find out if there isn't a more straightforward way of doing all of this, use bag files or other
+// standard formats instead?
 std::ofstream &operator<<(std::ofstream &file, const MessageContextNode::ContextType &context);
 namespace robot_commander_interfaces::msg {
     void to_json(nlohmann::json &j, const PoseStampedKeyword &message);

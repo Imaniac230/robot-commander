@@ -42,4 +42,4 @@ ros_agent_commander:
 message_context_node:
   ros__parameters:
     pose_context_file_path: /home/user/Work/ROS/github/local/robot-commander/messages/contexts/posestamped.json
-    load_data_files: True
+    load_pose_context_file: True
