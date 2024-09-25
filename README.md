@@ -14,7 +14,19 @@ This project currently supports requests to public OpenAI and Anthropic API serv
 
 ## Results
 
->TODO: add some example demonstration results (video?)
+The following three example scenarios showcase preliminary results. The commander always first waits for a fully generated audio response, and only then proceeds to generate a valid goal pose command for [Navigation2](https://github.com/ros-navigation/navigation2). All examples were executed with locally hosted models.
+
+1. Sending the robot to an unspecified location ([voice prompt](./assets/explore_prompt.wav), [speech response](./assets/explore_response.wav)):
+
+   https://github.com/user-attachments/assets/07fb16be-bbee-4f05-8d8e-c5a2ce4f515e
+
+2. After the pose contexts are updated with the new location, sending the robot back to the origin pose ([voice prompt](./assets/return_prompt_rerecorded.wav), [speech response](./assets/return_response.wav)):
+
+   https://github.com/user-attachments/assets/04c446b7-a70a-4cdb-a1f2-c78cd9f7911c
+
+3. Sending the robot to the newly acquired hall pose ([voice prompt](./assets/hall_prompt.wav), [speech response](./assets/hall_response.wav)):
+
+   https://github.com/user-attachments/assets/63054cca-ee74-4c26-be50-56bdf7ac41ce
 
 ## Shortcomings and TODOs
 
