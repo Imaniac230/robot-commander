@@ -14,7 +14,7 @@ This project currently supports requests to public OpenAI and Anthropic API serv
 
 ## Results
 
-The following three example scenarios showcase preliminary results. The commander always first waits for a fully generated audio response, and only then proceeds to generate a valid goal pose command for [Navigation2](https://github.com/ros-navigation/navigation2). All examples were executed with locally hosted models.
+The following three example scenarios showcase preliminary results. The commander always first waits for a fully generated audio response, and only then proceeds to generate a valid goal pose command for [Navigation2](https://github.com/ros-navigation/navigation2). All examples were executed with locally hosted models. The used robotic platform was developed at the [BUT Robotics and AI Group](https://github.com/Robotics-BUT).
 
 1. Sending the robot to an unspecified location ([voice prompt](./assets/explore_prompt.wav), [speech response](./assets/explore_response.wav)):
 
