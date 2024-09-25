@@ -5,9 +5,16 @@
 *.wav
 *.log
 *.png
+*.mp4
+*.mlt
+
+!assets/explore_prompt.wav
+!assets/explore_response.wav
+!assets/return_prompt_rerecorded.wav
+!assets/return_response.wav
+!assets/hall_prompt.wav
+!assets/hall_response.wav
 
 build
 install
 log
-
-environment.sh
