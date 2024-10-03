@@ -31,6 +31,13 @@ public:
     ~GamepadNode() override;
 
 private:
+    //FIXME(foxy): this wil no longer be compilable on foxy, which used SharedFuture instead of SharedFutureAndRequestId
+    typedef std::optional<rclcpp::Client<std_srvs::srv::Trigger>::SharedFutureAndRequestId> ClientFutureOptional;
+    typedef std::tuple<std::optional<rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr>, ClientFutureOptional,
+                       std::mutex>
+            Client;
+    typedef std::array<Client, 10> ClientPool;
+
     void onInitialize();
 
     void onFastPublishingTimerTick();
@@ -42,8 +49,8 @@ private:
     void onButtonReleased(uint8_t button) override;
     void onJoystickAxisMoved(uint8_t axis, int16_t value) override;
 
-    void appendClient(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client);
-    void callService(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client) const;
+    void appendClient(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr c);
+    ClientFutureOptional callService(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client);
     bool updateLightbarFromState(robot_commander_interfaces::msg::State state);
 
     rclcpp::TimerBase::SharedPtr fastPublishingTimer;
@@ -68,9 +75,9 @@ private:
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr powerOffClient;
     //    rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr clearBehaviorFaultClient;
 
+    rclcpp::Node::SharedPtr clientHandlingNode;
     std::pair<std::thread, std::atomic_bool> serviceHandlingThread;
-    std::array<std::pair<std::optional<rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr>, std::mutex>, 10>
-            clientPool{};
+    ClientPool clientPool{};
 
     robot_commander_interfaces::msg::State chatAgentState{};
     robot_commander_interfaces::msg::State rosAgentState{};

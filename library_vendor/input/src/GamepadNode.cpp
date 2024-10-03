@@ -61,60 +61,68 @@ void GamepadNode::onInitialize() {
     agentFeedbackTimer = create_wall_timer(200ms, [this] { onAgentFeedbackTimerTick(); });
 
     RCLCPP_INFO(get_logger(), "Initializing clients.");
-    auto service_callback_group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    sitClient = create_client<std_srvs::srv::Trigger>("sit", rmw_qos_profile_services_default, service_callback_group);
-    standClient =
-            create_client<std_srvs::srv::Trigger>("stand", rmw_qos_profile_services_default, service_callback_group);
-    selfRightClient = create_client<std_srvs::srv::Trigger>("self_right", rmw_qos_profile_services_default,
-                                                            service_callback_group);
-    rolloverClient =
-            create_client<std_srvs::srv::Trigger>("rollover", rmw_qos_profile_services_default, service_callback_group);
-    powerOnClient =
-            create_client<std_srvs::srv::Trigger>("power_on", rmw_qos_profile_services_default, service_callback_group);
-    powerOffClient = create_client<std_srvs::srv::Trigger>("power_off", rmw_qos_profile_services_default,
-                                                           service_callback_group);
-    //    clearBehaviorFaultClient = create_client<std_srvs::srv::Trigger>("clear_behavior_fault", rmw_qos_profile_services_default, service_callback_group);
-    serviceHandlingThread = std::make_pair(std::thread([this] {
-                                               while ((errno != EINTR) && serviceHandlingThread.second.load()) {
-                                                   for (auto &client: clientPool) {
-                                                       if (client.first.has_value()) {
-                                                           callService(client.first.value());
-                                                           const std::lock_guard<std::mutex> clientLock(client.second);
-                                                           //                    client.first = std::nullopt;
-                                                           client.first.reset();
-                                                       }
-                                                   }
-                                               }
-                                           }),
-                                           true);
+    clientHandlingNode = rclcpp::Node::make_shared("client_handling_node");
+    sitClient = clientHandlingNode->create_client<std_srvs::srv::Trigger>("sit");
+    standClient = clientHandlingNode->create_client<std_srvs::srv::Trigger>("stand");
+    selfRightClient = clientHandlingNode->create_client<std_srvs::srv::Trigger>("self_right");
+    rolloverClient = clientHandlingNode->create_client<std_srvs::srv::Trigger>("rollover");
+    powerOnClient = clientHandlingNode->create_client<std_srvs::srv::Trigger>("power_on");
+    powerOffClient = clientHandlingNode->create_client<std_srvs::srv::Trigger>("power_off");
+    //    clearBehaviorFaultClient = clientHandlingNode->create_client<std_srvs::srv::Trigger>("clear_behavior_fault");
+    serviceHandlingThread = std::make_pair(
+            std::thread([this] {
+                while ((errno != EINTR) && serviceHandlingThread.second.load()) {
+                    for (auto &[client, future, mutex]: clientPool) {
+                        const std::lock_guard<std::mutex> lock(mutex);
+
+                        //TODO(future-timeout): also handle cases when the we timeout for too long
+                        if (future.has_value()) {
+                            if (rclcpp::spin_until_future_complete(clientHandlingNode->get_node_base_interface(),
+                                                                   future.value(), std::chrono::milliseconds(5)) !=
+                                rclcpp::FutureReturnCode::TIMEOUT) {
+                                future.reset();
+                                future = std::nullopt;
+                                client.reset();
+                                client = std::nullopt;
+                            }
+                        }
+
+                        if (client.has_value() && !future.has_value()) future = callService(client.value());
+                    }
+                }
+            }),
+            true);
 }
 
-void GamepadNode::appendClient(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client) {
-    for (auto &c: clientPool) {
-        if (!c.first.has_value()) {
-            const std::lock_guard<std::mutex> lock(c.second);
-            c.first = client;
+void GamepadNode::appendClient(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr c) {
+    for (auto &[client, future, mutex]: clientPool) {
+        const std::lock_guard<std::mutex> lock(mutex);
+        if (!client.has_value()) {
+            client = c;
             return;
         }
     }
 
-    RCLCPP_WARN(get_logger(), "Failed to push client '%s', client pool is full.", client->get_service_name());
+    RCLCPP_WARN(get_logger(), "Failed to push client '%s', client pool is full, removing unsuccessful clients.",
+                c->get_service_name());
+    for (auto &[client, future, mutex]: clientPool) {
+        const std::lock_guard<std::mutex> lock(mutex);
+        if (!future.has_value()) {
+            client.reset();
+            client = std::nullopt;
+        }
+    }
 }
 
-void GamepadNode::callService(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client) const {
+GamepadNode::ClientFutureOptional GamepadNode::callService(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client) {
     auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
 
-    RCLCPP_INFO(get_logger(), "Waiting 2 seconds for service '%s' to become available ...", client->get_service_name());
-    if (!client->wait_for_service(2s)) {
-        if (rclcpp::ok()) {
-            RCLCPP_WARN(get_logger(), "Service '%s' not available, cancelling call.", client->get_service_name());
-        } else {
-            RCLCPP_ERROR(get_logger(), "Interrupted while waiting for the service. Cancelling call.");
-        }
-        return;
-    }
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000, "Waiting for service '%s' to become available ...",
+                         client->get_service_name());
+    if (!client->service_is_ready()) return std::nullopt;
 
-    auto inner_client_callback = [this, &client](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture inner_future) {
+    RCLCPP_INFO(get_logger(), "Service '%s' found.", client->get_service_name());
+    auto inner_client_callback = [this, client](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture inner_future) {
         const auto &result = inner_future.get();
         if (result->success) {
             RCLCPP_INFO(get_logger(), "Call to '%s' completed successfully, message: %s.", client->get_service_name(),
@@ -124,7 +132,7 @@ void GamepadNode::callService(rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr 
                          result->message.data());
         }
     };
-    client->async_send_request(request, inner_client_callback);
+    return client->async_send_request(request, inner_client_callback);
 }
 
 bool GamepadNode::updateLightbarFromState(const robot_commander_interfaces::msg::State state) {
